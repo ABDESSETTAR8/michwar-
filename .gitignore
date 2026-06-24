@@ -1,0 +1,45 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+*.iml
+*.lock
+
+# Android
+android/.gradle
+android/app/debug
+android/app/profile
+android/app/release
+android/key.properties
+**/android/**/google-services.json
+
+# iOS
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Pods/
+ios/.symlinks/
+**/ios/**/GoogleService-Info.plist
+
+# Secrets / env
+.env
+*.env.local
+lib/firebase_options.dart.bak
+
+# Cloud Functions
+functions/node_modules/
+functions/lib/
+functions/.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Misc
+.DS_Store
+scripts/serviceAccountKey.json 

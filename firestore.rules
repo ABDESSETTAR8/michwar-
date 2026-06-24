@@ -1,0 +1,213 @@
+rules_version = '2';
+
+// =============================================================================
+// MICHWAR — Firestore Security Rules
+// =============================================================================
+// Guiding principles:
+//  1. ALL financial fields (walletBalance, commissionRate, commissionTier,
+//     driverShareRate, ridesCompleted, ratingAverage/ratingCount, fare,
+//     status transitions on `rides`, transaction ledgers, loyalty points)
+//     are written EXCLUSIVELY by Cloud Functions using the Admin SDK, which
+//     bypasses these rules entirely. Clients therefore never get direct
+//     write access to those fields.
+//  2. Reads are scoped to the user's own data, or to the participants of a
+//     ride (passenger + assigned driver).
+//  3. `live_shares/{token}` is intentionally readable by anyone holding the
+//     token (unauthenticated), so a passenger can share a live-tracking link
+//     with a contact who doesn't have the app — but only while unexpired.
+// =============================================================================
+
+function isSignedIn() {
+  return request.auth != null;
+}
+
+function isOwner(uid) {
+  return isSignedIn() && request.auth.uid == uid;
+}
+
+function isAdmin() {
+  return isSignedIn() &&
+    exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+}
+
+// Only the listed top-level keys may be present in the diff between the
+// existing document and the proposed write. Used to whitelist the narrow
+// set of self-service fields a user/driver may edit directly.
+function onlyAffectsKeys(allowedKeys) {
+  return request.resource.data.diff(resource.data).affectedKeys()
+    .hasOnly(allowedKeys);
+}
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------
+    // users/{uid}
+    // -------------------------------------------------------------------
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Account creation happens via Cloud Function trigger on Auth user
+      // creation in most setups, but we also allow the client to create its
+      // own profile document on first sign-in.
+      allow create: if isOwner(uid) &&
+        request.resource.data.uid == uid &&
+        (!('role' in request.resource.data) || request.resource.data.role in ['passenger', 'driver']);
+
+      // Self-service profile edits: name/email/preferences/saved
+      // places/SOS contacts/FCM tokens. `loyalty` (points/tier) and `role`
+      // are NEVER client-writable — only Cloud Functions (completeRide,
+      // admin tools) may change them.
+      allow update: if isOwner(uid) &&
+        onlyAffectsKeys([
+          'fullName', 'email', 'photoUrl', 'savedPlaces', 'sosContacts',
+          'fcmTokens', 'preferences', 'updatedAt'
+        ]);
+
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------
+    // drivers/{uid}
+    // -------------------------------------------------------------------
+    match /drivers/{uid} {
+      // Driver profiles are readable by any signed-in user — passengers
+      // need to display the matched driver's name/vehicle/rating, and the
+      // demand-matching UI reads aggregate driver state. Wallet balance is
+      // a placeholder/demo figure, not real money.
+      allow read: if isSignedIn();
+
+      allow create: if isOwner(uid) && request.resource.data.uid == uid;
+
+      // Self-service fields only: presence/availability toggle, live
+      // location ping, Heading-Home preference, and verification document
+      // uploads. Financial/performance fields
+      // (walletBalance, commissionTier, commissionRate, driverShareRate,
+      // ridesCompleted, ratingAverage, ratingCount, isOnTrip) are
+      // Cloud-Functions-only.
+      allow update: if isOwner(uid) &&
+        onlyAffectsKeys([
+          'isOnline', 'location', 'headingHome', 'vehicle',
+          'verification', 'fcmTokens', 'updatedAt'
+        ]);
+
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------
+    // rides/{rideId}
+    // -------------------------------------------------------------------
+    match /rides/{rideId} {
+      allow read: if isSignedIn() &&
+        (resource.data.passengerId == request.auth.uid ||
+         resource.data.driverId == request.auth.uid ||
+         isAdmin());
+
+      // The passenger creates the initial ride-request document directly;
+      // the `onRideRequestCreated` trigger then performs driver matching.
+      allow create: if isSignedIn() &&
+        request.resource.data.passengerId == request.auth.uid &&
+        request.resource.data.status == 'searching' &&
+        request.resource.data.driverId == null;
+
+      // Every subsequent state transition (accepted, arrived, ongoing,
+      // cancelled, completed, fare, rating, candidateDriverIds, live-share
+      // tokens) is written exclusively by Cloud Functions via the Admin SDK.
+      allow update: if false;
+      allow delete: if false;
+
+      // Server-maintained audit trail of status transitions.
+      match /status_history/{entryId} {
+        allow read: if isSignedIn() &&
+          (get(/databases/$(database)/documents/rides/$(rideId)).data.passengerId == request.auth.uid ||
+           get(/databases/$(database)/documents/rides/$(rideId)).data.driverId == request.auth.uid ||
+           isAdmin());
+        allow write: if false;
+      }
+    }
+
+    // -------------------------------------------------------------------
+    // wallets/{driverId} and wallets/{driverId}/transactions/{txId}
+    // -------------------------------------------------------------------
+    match /wallets/{driverId} {
+      allow read: if isOwner(driverId) || isAdmin();
+      allow write: if false; // topUpWallet / completeRide (Cloud Functions)
+
+      match /transactions/{txId} {
+        allow read: if isOwner(driverId) || isAdmin();
+        allow write: if false;
+      }
+    }
+
+    // -------------------------------------------------------------------
+    // transactions/{txId}  (reserved top-level collection, unused by the
+    // current client — ledger entries live under wallets/{driverId}/transactions)
+    // -------------------------------------------------------------------
+    match /transactions/{txId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // -------------------------------------------------------------------
+    // sos_alerts/{alertId} — written only by the `sosAlert` Cloud Function.
+    // -------------------------------------------------------------------
+    match /sos_alerts/{alertId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+
+    // -------------------------------------------------------------------
+    // live_shares/{token} — public, time-limited read for the live trip
+    // share page (no auth required). Created only by
+    // `generateLiveShareLink` (Cloud Function).
+    // -------------------------------------------------------------------
+    match /live_shares/{token} {
+      allow read: if resource.data.expiresAt > request.time;
+      allow write: if false;
+    }
+
+    // -------------------------------------------------------------------
+    // heatmap_cells/{geohash} — demand heatmap. Any signed-in user may
+    // record a "demand ping" (increment count) when requesting a ride;
+    // drivers read the aggregate to find busy areas.
+    // -------------------------------------------------------------------
+    match /heatmap_cells/{cellId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+        request.resource.data.keys().hasOnly(['geohash', 'lat', 'lng', 'count', 'updatedAt']);
+      allow update: if isSignedIn() &&
+        onlyAffectsKeys(['count', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------
+    // wallet_transactions/{txId} — top-level ledger (mirrors subcollection
+    // under wallets). Written only by Cloud Functions (Admin SDK).
+    // -------------------------------------------------------------------
+    match /wallet_transactions/{txId} {
+      allow read: if isSignedIn() &&
+        (resource.data.driverId == request.auth.uid || isAdmin());
+      allow write: if false;
+    }
+
+    // -------------------------------------------------------------------
+    // rate_limits/{ipHash} — used by signup rate-limiting Cloud Function.
+    // Clients never read or write this directly.
+    // -------------------------------------------------------------------
+    match /rate_limits/{docId} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------
+    // ratings/{ratingId} — reserved top-level collection, unused by the
+    // current client (ratings are embedded in rides/{rideId}.rating and
+    // written by the `submitRating` Cloud Function).
+    // -------------------------------------------------------------------
+    match /ratings/{ratingId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+  }
+}

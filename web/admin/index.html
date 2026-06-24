@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MICHWAR Admin</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#0A6E57"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#0A6E57;--primary-dark:#064D3D;--primary-light:#E1F5EE;
+  --secondary:#FFC233;--bg:#F4F6F5;--surface:#fff;--border:#E2E8E6;
+  --text:#161B19;--muted:#6B7570;--danger:#D32F2F;--danger-bg:#FDEDED;
+  --success:#2E7D32;--success-bg:#EDF7EE;--warning:#F59E0B;--warning-bg:#FEF9EC;
+  --info:#185FA5;--info-bg:#E6F1FB;
+  --sidebar-w:230px;--header-h:58px;--radius:10px;--radius-sm:6px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;display:flex;height:100vh;overflow:hidden}
+
+/* ── Auth overlay ── */
+#auth-screen{position:fixed;inset:0;background:var(--primary-dark);display:flex;align-items:center;justify-content:center;z-index:999}
+.auth-card{background:#fff;border-radius:16px;padding:36px 32px;width:360px;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.auth-logo svg{background:var(--primary);border-radius:10px;padding:6px}
+.auth-logo span{font-size:20px;font-weight:700;color:var(--primary)}
+.auth-card h2{font-size:18px;font-weight:600;margin-bottom:6px}
+.auth-card p{color:var(--muted);font-size:13px;margin-bottom:22px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.field input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;outline:none;transition:border .15s}
+.field input:focus{border-color:var(--primary)}
+.btn{width:100%;padding:11px;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{opacity:.9}
+.auth-err{color:var(--danger);font-size:13px;margin-top:10px;display:none}
+
+/* ── Sidebar ── */
+#sidebar{width:var(--sidebar-w);background:var(--primary-dark);display:flex;flex-direction:column;height:100%;flex-shrink:0}
+.sidebar-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo svg{flex-shrink:0}
+.sidebar-logo span{color:#fff;font-size:17px;font-weight:700;letter-spacing:1px}
+nav{flex:1;padding:14px 8px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);color:rgba(255,255,255,.65);cursor:pointer;user-select:none;transition:all .15s;margin-bottom:2px;font-size:13.5px;font-weight:500}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.15);color:#fff}
+.nav-item svg{flex-shrink:0;opacity:.8}
+.nav-section{color:rgba(255,255,255,.35);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:10px 12px 4px}
+.sidebar-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);font-size:12px}
+.signout-btn{background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.7);padding:7px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:12.5px;width:100%;text-align:left;margin-top:8px;transition:background .15s}
+.signout-btn:hover{background:rgba(255,255,255,.15)}
+
+/* ── Main area ── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#header{height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+#page-title{font-size:17px;font-weight:600}
+.header-right{display:flex;align-items:center;gap:12px}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-green{background:var(--success-bg);color:var(--success)}
+.badge-red{background:var(--danger-bg);color:var(--danger)}
+.badge-amber{background:var(--warning-bg);color:var(--warning)}
+.badge-blue{background:var(--info-bg);color:var(--info)}
+.badge-gray{background:#F0F0F0;color:var(--muted)}
+
+#content{flex:1;overflow-y:auto;padding:24px}
+
+/* ── Cards ── */
+.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:20px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+.stat-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:18px;display:flex;flex-direction:column;gap:6px}
+.stat-label{font-size:12px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+.stat-value{font-size:28px;font-weight:700;color:var(--text)}
+.stat-sub{font-size:12px;color:var(--muted)}
+.stat-icon{width:36px;height:36px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+
+/* ── Tables ── */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;background:var(--surface)}
+thead{background:#F8FAF9}
+th{padding:10px 14px;text-align:left;font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border)}
+td{padding:11px 14px;font-size:13.5px;border-bottom:1px solid #F2F4F3;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#FAFCFB}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--primary-light);color:var(--primary);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.td-user{display:flex;align-items:center;gap:10px}
+
+/* ── Action btns ── */
+.btn-sm{padding:5px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:12.5px;font-weight:500;transition:all .15s}
+.btn-sm:hover{background:var(--bg)}
+.btn-sm.approve{background:var(--success-bg);color:var(--success);border-color:var(--success)}
+.btn-sm.reject{background:var(--danger-bg);color:var(--danger);border-color:var(--danger)}
+
+/* ── Misc ── */
+.section-title{font-size:15px;font-weight:600;margin-bottom:14px}
+.row{display:flex;gap:16px;flex-wrap:wrap}
+.col{flex:1;min-width:240px}
+.spinner{width:18px;height:18px;border:2.5px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+.pill{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-bar select,.filter-bar input{padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;outline:none;background:var(--surface)}
+.refresh-btn{margin-left:auto;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px}
+
+/* ── Responsive sidebar collapse ── */
+@media(max-width:700px){#sidebar{display:none}#content{padding:14px}}
+</style>
+</head>
+<body>
+
+<!-- ── Auth screen ── -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <svg width="36" height="36" viewBox="0 0 36 36">
+        <rect width="36" height="36" rx="8" fill="#0A6E57"/>
+        <path d="M8 22h20M10 22v-4a2 2 0 012-2h12a2 2 0 012 2v4M13 16v-2a2 2 0 012-2h6a2 2 0 012 2v2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+        <circle cx="13" cy="23.5" r="2" fill="#fff"/>
+        <circle cx="23" cy="23.5" r="2" fill="#fff"/>
+      </svg>
+      <span>MICHWAR Admin</span>
+    </div>
+    <h2>Sign in</h2>
+    <p>Access restricted to superusers.</p>
+    <div class="field"><label>Email</label><input type="email" id="auth-email" placeholder="admin@example.com"/></div>
+    <div class="field"><label>Password</label><input type="password" id="auth-pass" placeholder="••••••••"/></div>
+    <button class="btn btn-primary" id="auth-btn">Sign in</button>
+    <p class="auth-err" id="auth-err"></p>
+  </div>
+</div>
+
+<!-- ── App shell ── -->
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <svg width="30" height="30" viewBox="0 0 30 30">
+      <rect width="30" height="30" rx="7" fill="#fff" fill-opacity=".15"/>
+      <path d="M6 20h18M8 20v-4a2 2 0 012-2h10a2 2 0 012 2v4M11 14v-2a2 2 0 012-2h4a2 2 0 012 2v2" stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <circle cx="11" cy="21.5" r="1.8" fill="#fff"/>
+      <circle cx="19" cy="21.5" r="1.8" fill="#fff"/>
+    </svg>
+    <span>MICHWAR</span>
+  </div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" data-page="dashboard">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-section">People</div>
+    <div class="nav-item" data-page="users">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87"/></svg>
+      Users
+    </div>
+    <div class="nav-item" data-page="drivers">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      Drivers & Verification
+    </div>
+    <div class="nav-section">Operations</div>
+    <div class="nav-item" data-page="rides">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v5"/><circle cx="15.5" cy="17.5" r="2.5"/><circle cx="5.5" cy="17.5" r="2.5"/></svg>
+      Rides
+    </div>
+    <div class="nav-item" data-page="wallets">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 14h2"/></svg>
+      Wallets & Transactions
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div id="admin-email-label" style="word-break:break-all"></div>
+    <button class="signout-btn" id="signout-btn">Sign out</button>
+  </div>
+</div>
+
+<div id="main">
+  <div id="header">
+    <span id="page-title">Dashboard</span>
+    <div class="header-right">
+      <span class="badge badge-green">● Live</span>
+      <button class="refresh-btn" id="global-refresh">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+  <div id="content">
+    <div class="empty"><div class="spinner"></div><br>Loading…</div>
+  </div>
+</div>
+
+<script type="module">
+// ── Firebase SDK (compat) ──────────────────────────────────────────────────
+// REPLACE the config below with your own Firebase project config.
+// Get it from Firebase Console > Project Settings > Your apps > Web app.
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDO9HUpQvg1bA0qo8yPSj-N0uf8-SsYKsw",
+  authDomain: "michwar-bfcca.firebaseapp.com",
+  projectId: "michwar-bfcca",
+  storageBucket: "michwar-bfcca.firebasestorage.app",
+  messagingSenderId: "691204070078",
+  appId: "1:691204070078:web:c923eec5783c4045231cef",
+  measurementId: "G-PJ1QL3ZD50",
+};
+
+const FS_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents`;
+const AUTH_BASE = `https://identitytoolkit.googleapis.com/v1`;
+let ID_TOKEN = null;
+let CURRENT_USER_EMAIL = null;
+
+// ── Minimal Firebase REST auth helpers ───────────────────────────────────
+async function signInWithEmail(email, password) {
+  const r = await fetch(`${AUTH_BASE}/accounts:signInWithPassword?key=${FIREBASE_CONFIG.apiKey}`,{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({email,password,returnSecureToken:true}),
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error?.message ?? "Sign-in failed");
+  ID_TOKEN = d.idToken;
+  CURRENT_USER_EMAIL = d.email;
+  return d;
+}
+
+async function fsGet(path) {
+  const r = await fetch(`${FS_BASE}/${path}`,{headers:{Authorization:`Bearer ${ID_TOKEN}`}});
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function fsList(collection, {pageSize=50,orderBy,filter}={}) {
+  let url = `${FS_BASE}/${collection}?pageSize=${pageSize}`;
+  if (orderBy) url += `&orderBy=${orderBy}`;
+  const r = await fetch(url,{headers:{Authorization:`Bearer ${ID_TOKEN}`}});
+  if (!r.ok) throw new Error(await r.text());
+  const d = await r.json();
+  return d.documents ?? [];
+}
+
+async function fsPatch(docPath, fields) {
+  const body = {fields: Object.fromEntries(
+    Object.entries(fields).map(([k,v])=>[k,toFsValue(v)])
+  )};
+  const updateMask = Object.keys(fields).map(k=>`updateMask.fieldPaths=${k}`).join("&");
+  const r = await fetch(`${FS_BASE}/${docPath}?${updateMask}`,{
+    method:"PATCH",
+    headers:{Authorization:`Bearer ${ID_TOKEN}`,"Content-Type":"application/json"},
+    body:JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+function toFsValue(v) {
+  if (typeof v === "string") return {stringValue:v};
+  if (typeof v === "number") return {integerValue:String(v)};
+  if (typeof v === "boolean") return {booleanValue:v};
+  return {stringValue:String(v)};
+}
+
+// ── Firestore doc → plain JS object ─────────────────────────────────────
+function fromFsDoc(doc) {
+  const id = doc.name.split("/").pop();
+  const fields = doc.fields ?? {};
+  const obj = {id};
+  for (const [k,v] of Object.entries(fields)) {
+    obj[k] = fromFsValue(v);
+  }
+  return obj;
+}
+
+function fromFsValue(v) {
+  if ("stringValue" in v) return v.stringValue;
+  if ("integerValue" in v) return parseInt(v.integerValue);
+  if ("doubleValue" in v) return v.doubleValue;
+  if ("booleanValue" in v) return v.booleanValue;
+  if ("timestampValue" in v) return new Date(v.timestampValue).toLocaleDateString();
+  if ("nullValue" in v) return null;
+  if ("arrayValue" in v) return (v.arrayValue.values ?? []).map(fromFsValue);
+  if ("mapValue" in v) {
+    const m = {};
+    for (const [k,mv] of Object.entries(v.mapValue.fields ?? {})) m[k]=fromFsValue(mv);
+    return m;
+  }
+  return null;
+}
+
+// ── UI helpers ───────────────────────────────────────────────────────────
+const content = document.getElementById("content");
+const pageTitle = document.getElementById("page-title");
+let activePage = "dashboard";
+
+function setPage(name) {
+  activePage = name;
+  document.querySelectorAll(".nav-item").forEach(el=>{
+    el.classList.toggle("active", el.dataset.page===name);
+  });
+  const titles = {dashboard:"Dashboard",users:"Users",drivers:"Drivers & Verification",rides:"Rides",wallets:"Wallets & Transactions"};
+  pageTitle.textContent = titles[name] ?? name;
+  render(name);
+}
+
+function loading() {
+  content.innerHTML = `<div class="empty"><div class="spinner"></div><br>Loading…</div>`;
+}
+
+function badge(status) {
+  const map = {
+    searching:"badge-amber",accepted:"badge-blue",arrived:"badge-blue",
+    ongoing:"badge-green",completed:"badge-green",
+    cancelled_by_passenger:"badge-red",cancelled_by_driver:"badge-red",
+    no_drivers_found:"badge-red",
+    approved:"badge-green",pending:"badge-amber",under_review:"badge-blue",rejected:"badge-red",
+    passenger:"badge-blue",driver:"badge-green",admin:"badge-amber",
+    tier1:"badge-gray",tier2:"badge-green",
+  };
+  const cls = map[status] ?? "badge-gray";
+  return `<span class="badge ${cls}">${status?.replace(/_/g," ") ?? "-"}</span>`;
+}
+
+function initials(name) {
+  return (name ?? "?").split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();
+}
+
+// ── Pages ────────────────────────────────────────────────────────────────
+async function render(page) {
+  loading();
+  try {
+    if (page==="dashboard") await renderDashboard();
+    else if (page==="users") await renderUsers();
+    else if (page==="drivers") await renderDrivers();
+    else if (page==="rides") await renderRides();
+    else if (page==="wallets") await renderWallets();
+  } catch(e) {
+    content.innerHTML = `<div class="card"><p style="color:var(--danger)">Error: ${e.message}</p></div>`;
+  }
+}
+
+async function renderDashboard() {
+  const [userDocs, rideDocs, driverDocs] = await Promise.all([
+    fsList("users",{pageSize:200}),
+    fsList("rides",{pageSize:200}),
+    fsList("drivers",{pageSize:200}),
+  ]);
+
+  const users = userDocs.map(fromFsDoc);
+  const rides = rideDocs.map(fromFsDoc);
+  const drivers = driverDocs.map(fromFsDoc);
+
+  const totalUsers = users.length;
+  const totalDrivers = drivers.length;
+  const completedRides = rides.filter(r=>r.status==="completed").length;
+  const activeRides = rides.filter(r=>["searching","accepted","arrived","ongoing"].includes(r.status)).length;
+  const pendingVerification = drivers.filter(d=>d.verificationStatus==="pending"||d.verificationStatus==="under_review").length;
+  const totalRevenue = rides.filter(r=>r.fare).reduce((s,r)=>{
+    const fare = typeof r.fare==="object" ? r.fare?.companyRevenue ?? 0 : 0;
+    return s + fare;
+  }, 0);
+
+  const recentRides = [...rides].sort((a,b)=>0).slice(0,6);
+
+  content.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--primary-light)">
+          <svg width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+        </div>
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value">${totalUsers}</div>
+        <div class="stat-sub">registered accounts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#E8F5E9">
+          <svg width="18" height="18" fill="none" stroke="#2E7D32" stroke-width="2" viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v5"/><circle cx="15.5" cy="17.5" r="2.5"/><circle cx="5.5" cy="17.5" r="2.5"/></svg>
+        </div>
+        <div class="stat-label">Completed Rides</div>
+        <div class="stat-value">${completedRides}</div>
+        <div class="stat-sub">${activeRides} currently active</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#E3F2FD">
+          <svg width="18" height="18" fill="none" stroke="#185FA5" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <div class="stat-label">Active Drivers</div>
+        <div class="stat-value">${totalDrivers}</div>
+        <div class="stat-sub">${pendingVerification} pending review</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#FFF8E1">
+          <svg width="18" height="18" fill="none" stroke="#F59E0B" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 14h2"/></svg>
+        </div>
+        <div class="stat-label">Platform Revenue</div>
+        <div class="stat-value">${Math.round(totalRevenue).toLocaleString()}</div>
+        <div class="stat-sub">DZD total commission</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col" style="flex:2;min-width:280px">
+        <div class="card">
+          <div class="section-title">Recent rides</div>
+          ${recentRides.length === 0 ? '<div class="empty">No rides yet</div>' : `
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Ride ID</th><th>Status</th><th>Tier</th><th>Time</th></tr></thead>
+              <tbody>${recentRides.map(r=>`
+                <tr>
+                  <td style="font-family:monospace;font-size:12px">${r.id.slice(0,8)}…</td>
+                  <td>${badge(r.status)}</td>
+                  <td>${badge(r.rideTier ?? "standard")}</td>
+                  <td>${r.requestedAt ?? "-"}</td>
+                </tr>`).join("")}
+              </tbody>
+            </table>
+          </div>`}
+        </div>
+      </div>
+      <div class="col" style="min-width:200px">
+        <div class="card">
+          <div class="section-title">Ride status breakdown</div>
+          ${["searching","accepted","ongoing","completed","cancelled_by_passenger","cancelled_by_driver","no_drivers_found"]
+            .map(s=>{const c=rides.filter(r=>r.status===s).length;return c>0?`<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px"><span>${badge(s)}</span><strong>${c}</strong></div>`:""})
+            .join("")}
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="section-title">Verification queue</div>
+          ${pendingVerification===0?'<div class="empty" style="padding:16px">All clear ✓</div>':
+            `<div style="font-size:32px;font-weight:700;color:var(--warning)">${pendingVerification}</div>
+             <div style="font-size:13px;color:var(--muted);margin-top:4px">drivers awaiting review</div>
+             <button class="btn-sm" style="margin-top:12px;width:100%" onclick="setPage('drivers')">Review now</button>`}
+        </div>
+      </div>
+    </div>`;
+}
+
+async function renderUsers() {
+  const docs = await fsList("users",{pageSize:100});
+  const users = docs.map(fromFsDoc);
+  content.innerHTML = `
+    <div class="filter-bar">
+      <input id="user-search" placeholder="Search by name or email…" style="flex:1;max-width:280px"/>
+      <select id="user-role-filter">
+        <option value="">All roles</option>
+        <option value="passenger">Passenger</option>
+        <option value="driver">Driver</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button class="refresh-btn" onclick="setPage('users')">↺ Refresh</button>
+    </div>
+    <div class="table-wrap" id="user-table-wrap">
+      ${buildUserTable(users)}
+    </div>`;
+
+  document.getElementById("user-search").addEventListener("input",e=>{
+    const q=e.target.value.toLowerCase();
+    const role=document.getElementById("user-role-filter").value;
+    document.getElementById("user-table-wrap").innerHTML=buildUserTable(
+      users.filter(u=>(u.fullName??"").toLowerCase().includes(q)||(u.email??"").toLowerCase().includes(q))
+           .filter(u=>!role||u.role===role)
+    );
+  });
+  document.getElementById("user-role-filter").addEventListener("change",e=>{
+    const role=e.target.value;
+    const q=document.getElementById("user-search").value.toLowerCase();
+    document.getElementById("user-table-wrap").innerHTML=buildUserTable(
+      users.filter(u=>(!role||u.role===role)&&((u.fullName??"")+u.email).toLowerCase().includes(q))
+    );
+  });
+}
+
+function buildUserTable(users) {
+  if (!users.length) return '<div class="empty">No users found</div>';
+  return `<table>
+    <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Loyalty tier</th><th>Rides</th></tr></thead>
+    <tbody>${users.map(u=>`
+      <tr>
+        <td><div class="td-user"><div class="avatar">${initials(u.fullName)}</div><strong>${u.fullName ?? "-"}</strong></div></td>
+        <td style="color:var(--muted)">${u.email ?? "-"}</td>
+        <td>${badge(u.role)}</td>
+        <td>${badge(u.loyaltyTier ?? "standard")}</td>
+        <td>${u.totalRidesCompleted ?? 0}</td>
+      </tr>`).join("")}
+    </tbody></table>`;
+}
+
+async function renderDrivers() {
+  const docs = await fsList("drivers",{pageSize:100});
+  const drivers = docs.map(fromFsDoc);
+  const pending = drivers.filter(d=>["pending","under_review"].includes(d.verificationStatus));
+  const approved = drivers.filter(d=>d.verificationStatus==="approved");
+  const rejected = drivers.filter(d=>d.verificationStatus==="rejected");
+
+  content.innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <div class="stat-card" style="flex:1;min-width:140px;padding:14px">
+        <div class="stat-label">Pending review</div>
+        <div class="stat-value" style="font-size:24px;color:var(--warning)">${pending.length}</div>
+      </div>
+      <div class="stat-card" style="flex:1;min-width:140px;padding:14px">
+        <div class="stat-label">Approved</div>
+        <div class="stat-value" style="font-size:24px;color:var(--success)">${approved.length}</div>
+      </div>
+      <div class="stat-card" style="flex:1;min-width:140px;padding:14px">
+        <div class="stat-label">Rejected</div>
+        <div class="stat-value" style="font-size:24px;color:var(--danger)">${rejected.length}</div>
+      </div>
+    </div>
+
+    ${pending.length > 0 ? `
+    <div class="section-title">Verification queue</div>
+    <div class="table-wrap" style="margin-bottom:20px">
+      <table>
+        <thead><tr><th>Driver ID</th><th>Vehicle</th><th>Category</th><th>Rides</th><th>Rating</th><th>Action</th></tr></thead>
+        <tbody>${pending.map(d=>`
+          <tr>
+            <td style="font-family:monospace;font-size:12px">${d.id.slice(0,10)}…</td>
+            <td>${d.vehicleMake ?? "-"} ${d.vehicleModel ?? ""}<br><span style="color:var(--muted);font-size:12px">${d.vehiclePlate ?? ""}</span></td>
+            <td>${badge(d.vehicleCategory ?? "standard")}</td>
+            <td>${d.ridesCompleted ?? 0}</td>
+            <td>⭐ ${(d.ratingAverage ?? 0).toFixed(1)}</td>
+            <td style="display:flex;gap:6px;padding-top:8px">
+              <button class="btn-sm approve" onclick="verifyDriver('${d.id}','approved')">Approve</button>
+              <button class="btn-sm reject" onclick="verifyDriver('${d.id}','rejected')">Reject</button>
+            </td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>` : ""}
+
+    <div class="section-title">All drivers</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Driver ID</th><th>Vehicle</th><th>Status</th><th>Tier</th><th>Rides</th><th>Rating</th><th>Wallet (DZD)</th></tr></thead>
+        <tbody>${drivers.map(d=>`
+          <tr>
+            <td style="font-family:monospace;font-size:12px">${d.id.slice(0,10)}…</td>
+            <td>${d.vehicleMake ?? "-"} ${d.vehicleModel ?? ""}</td>
+            <td>${badge(d.verificationStatus)}</td>
+            <td>${badge(d.commissionTier ?? "tier1")}</td>
+            <td>${d.ridesCompleted ?? 0}</td>
+            <td>⭐ ${(d.ratingAverage ?? 0).toFixed(1)}</td>
+            <td>${(d.walletBalance ?? 0).toLocaleString()}</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+window.verifyDriver = async function(driverId, status) {
+  try {
+    await fsPatch(`drivers/${driverId}`, {verificationStatus: status});
+    await renderDrivers();
+  } catch(e) {alert("Error: " + e.message);}
+};
+
+async function renderRides() {
+  const docs = await fsList("rides",{pageSize:100});
+  const rides = docs.map(fromFsDoc);
+  content.innerHTML = `
+    <div class="filter-bar">
+      <select id="ride-status-filter">
+        <option value="">All statuses</option>
+        ${["searching","accepted","arrived","ongoing","completed","cancelled_by_passenger","cancelled_by_driver","no_drivers_found"]
+          .map(s=>`<option value="${s}">${s.replace(/_/g," ")}</option>`).join("")}
+      </select>
+      <button class="refresh-btn" onclick="setPage('rides')">↺ Refresh</button>
+    </div>
+    <div class="table-wrap" id="rides-table-wrap">
+      ${buildRidesTable(rides)}
+    </div>`;
+
+  document.getElementById("ride-status-filter").addEventListener("change",e=>{
+    const s=e.target.value;
+    document.getElementById("rides-table-wrap").innerHTML=buildRidesTable(
+      s ? rides.filter(r=>r.status===s) : rides
+    );
+  });
+}
+
+function buildRidesTable(rides) {
+  if (!rides.length) return '<div class="empty">No rides found</div>';
+  return `<table>
+    <thead><tr><th>Ride ID</th><th>Status</th><th>Tier</th><th>Fare (DZD)</th><th>Distance</th><th>Points</th><th>Requested</th></tr></thead>
+    <tbody>${rides.map(r=>{
+      const fare = typeof r.fare === "object" && r.fare ? r.fare.totalFare ?? "-" : "-";
+      const dist = typeof r.estimate === "object" && r.estimate ? (r.estimate.distanceKm ?? "-") + " km" : "-";
+      return `<tr>
+        <td style="font-family:monospace;font-size:12px">${r.id.slice(0,8)}…</td>
+        <td>${badge(r.status)}</td>
+        <td>${badge(r.rideTier ?? "standard")}</td>
+        <td>${fare !== "-" ? Math.round(fare).toLocaleString() : "-"}</td>
+        <td>${dist}</td>
+        <td>${r.pointsAwarded ?? 0}</td>
+        <td>${r.requestedAt ?? "-"}</td>
+      </tr>`;}).join("")}
+    </tbody></table>`;
+}
+
+async function renderWallets() {
+  const docs = await fsList("wallet_transactions",{pageSize:100});
+  const txs = docs.map(fromFsDoc);
+  const walletDocs = await fsList("wallets",{pageSize:100});
+  const wallets = walletDocs.map(fromFsDoc);
+  const totalBalance = wallets.reduce((s,w)=>s+(w.balance??0),0);
+
+  content.innerHTML = `
+    <div class="stat-grid" style="margin-bottom:20px">
+      <div class="stat-card">
+        <div class="stat-label">Total wallet balance</div>
+        <div class="stat-value">${Math.round(totalBalance).toLocaleString()}</div>
+        <div class="stat-sub">DZD across all drivers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Transactions</div>
+        <div class="stat-value">${txs.length}</div>
+        <div class="stat-sub">total ledger entries</div>
+      </div>
+    </div>
+
+    <div class="section-title">Driver wallets</div>
+    <div class="table-wrap" style="margin-bottom:20px">
+      <table>
+        <thead><tr><th>Driver ID</th><th>Balance (DZD)</th><th>Low balance</th></tr></thead>
+        <tbody>${wallets.map(w=>`
+          <tr>
+            <td style="font-family:monospace;font-size:12px">${(w.driverId ?? w.id).slice(0,12)}…</td>
+            <td style="font-weight:600">${(w.balance ?? 0).toLocaleString()}</td>
+            <td>${w.lowBalance ? '<span class="badge badge-red">Low</span>' : '<span class="badge badge-green">OK</span>'}</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-title">Recent transactions</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>TX ID</th><th>Type</th><th>Amount (DZD)</th><th>Date</th></tr></thead>
+        <tbody>${txs.length ? txs.map(t=>`
+          <tr>
+            <td style="font-family:monospace;font-size:12px">${t.id.slice(0,10)}…</td>
+            <td>${badge(t.type ?? "unknown")}</td>
+            <td style="font-weight:600">${(t.amount ?? 0).toLocaleString()}</td>
+            <td>${t.createdAt ?? "-"}</td>
+          </tr>`).join("") : '<tr><td colspan="4" class="empty">No transactions yet</td></tr>'}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ── Auth flow ─────────────────────────────────────────────────────────────
+document.getElementById("auth-btn").addEventListener("click", async () => {
+  const email = document.getElementById("auth-email").value.trim();
+  const pass = document.getElementById("auth-pass").value;
+  const err = document.getElementById("auth-err");
+  const btn = document.getElementById("auth-btn");
+  btn.textContent = "Signing in…"; btn.disabled = true;
+  err.style.display = "none";
+  try {
+    await signInWithEmail(email, pass);
+    document.getElementById("auth-screen").style.display = "none";
+    document.getElementById("admin-email-label").textContent = CURRENT_USER_EMAIL;
+    setPage("dashboard");
+  } catch(e) {
+    err.textContent = e.message;
+    err.style.display = "block";
+  } finally {
+    btn.textContent = "Sign in"; btn.disabled = false;
+  }
+});
+
+document.getElementById("auth-email").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("auth-pass").focus()});
+document.getElementById("auth-pass").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("auth-btn").click()});
+
+document.getElementById("signout-btn").addEventListener("click",()=>{
+  ID_TOKEN = null;
+  document.getElementById("auth-screen").style.display = "flex";
+  content.innerHTML = "";
+});
+
+document.querySelectorAll(".nav-item").forEach(el=>{
+  el.addEventListener("click",()=>setPage(el.dataset.page));
+});
+
+document.getElementById("global-refresh").addEventListener("click",()=>setPage(activePage));
+
+// ── Service Worker ────────────────────────────────────────────────────────
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+</script>
+</body>
+</html>

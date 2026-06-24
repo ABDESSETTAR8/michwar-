@@ -1,0 +1,30 @@
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Background and Motivation}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Problem Statement}{3}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Objectives}{3}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}Scope and Report Structure}{4}{subsection.1.4}%
+\contentsline {section}{\numberline {2}Methods}{4}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Overall System Architecture}{4}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Technology Stack}{4}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Data Model and Schema Design}{4}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Migration Methodology: Firebase to PocketBase}{5}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Backend Business Logic (\texttt {pb\_hooks})}{8}{subsection.2.5}%
+\contentsline {subsubsection}{\numberline {2.5.1}Shared Constants and the Pricing Engine}{8}{subsubsection.2.5.1}%
+\contentsline {subsubsection}{\numberline {2.5.2}Geohash-Based Driver Matching}{10}{subsubsection.2.5.2}%
+\contentsline {subsubsection}{\numberline {2.5.3}The Ride Lifecycle State Machine}{11}{subsubsection.2.5.3}%
+\contentsline {subsection}{\numberline {2.6}Client Architecture: State Management and Realtime Data}{13}{subsection.2.6}%
+\contentsline {subsection}{\numberline {2.7}Build Process: Producing a Release APK}{15}{subsection.2.7}%
+\contentsline {subsection}{\numberline {2.8}Deployment Methodology: Containerization and Fly.io}{16}{subsection.2.8}%
+\contentsline {section}{\numberline {3}Results}{17}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Codebase Composition}{17}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Build Results}{17}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Deployment Outcome}{19}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Worked Example: Fare and Commission Computation}{19}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}Issues Encountered and Resolutions}{19}{subsection.3.5}%
+\contentsline {section}{\numberline {4}Discussion}{22}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Architectural Trade-offs: Self-Hosting versus a Managed BaaS}{22}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Robustness of the Transactional Hook Pattern}{22}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Lessons Learned}{22}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Limitations}{23}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}Future Work}{23}{subsection.4.5}%
+\contentsline {section}{\numberline {5}Conclusion}{23}{section.5}%

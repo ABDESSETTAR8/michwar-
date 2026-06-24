@@ -1,0 +1,24 @@
+# fly.toml app configuration file generated for michwar-pb on 2026-06-13T04:09:04+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'michwar-pb'
+primary_region = 'cdg'
+
+[build]
+
+[[mounts]]
+  source = 'pb_data'
+  destination = '/pb/pb_data'
+
+[http_service]
+  internal_port = 8090
+  force_https = true
+  auto_stop_machines = 'off'
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '256mb'

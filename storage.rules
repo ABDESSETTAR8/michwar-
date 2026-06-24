@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// =============================================================================
+// MICHWAR — Firebase Storage Security Rules
+// =============================================================================
+// Only one Storage path is used by the current build: driver verification
+// documents (driving license, vehicle registration / "carte grise",
+// insurance, etc.), uploaded by `DriverDocumentService`.
+//
+//   driver_documents/{driverId}/{documentType}.jpg
+//
+// A driver may upload/overwrite their own documents and read them back
+// (e.g. to show upload status in the verification screen). Admins (any user
+// whose `users/{uid}.role == 'admin'`) may read all documents to review and
+// approve/reject verification. No one may delete documents from the client
+// — retained for compliance/audit.
+// =============================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    match /driver_documents/{driverId}/{fileName} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == driverId ||
+         firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin');
+
+      allow write: if request.auth != null &&
+        request.auth.uid == driverId &&
+        request.resource.size < 10 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+
+      allow delete: if false;
+    }
+
+    // Deny everything else by default.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

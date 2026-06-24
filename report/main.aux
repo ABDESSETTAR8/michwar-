@@ -1,0 +1,108 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
+\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
+\global\let\oldcontentsline\contentsline
+\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
+\global\let\oldnewlabel\newlabel
+\gdef\newlabel#1#2{\newlabelxx{#1}#2}
+\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
+\AtEndDocument{\ifx\hyper@anchor\@undefined
+\let\contentsline\oldcontentsline
+\let\newlabel\oldnewlabel
+\fi}
+\fi}
+\global\let\hyper@last\relax 
+\gdef\HyperFirstAtBeginDocument#1{#1}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{3}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Background and Motivation}{3}{subsection.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Problem Statement}{3}{subsection.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Objectives}{3}{subsection.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4}Scope and Report Structure}{4}{subsection.1.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Methods}{4}{section.2}\protected@file@percent }
+\newlabel{sec:methods}{{2}{4}{Methods}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Overall System Architecture}{4}{subsection.2.1}\protected@file@percent }
+\newlabel{sec:architecture}{{2.1}{4}{Overall System Architecture}{subsection.2.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces High-level architecture: feature-first Flutter modules communicate with PocketBase collections directly (CRUD + realtime subscriptions) for non-sensitive reads/writes, and through custom \texttt  {pb\_hooks} routes for every authoritative, financially sensitive mutation.\relax }}{4}{figure.caption.1}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:architecture}{{1}{4}{High-level architecture: feature-first Flutter modules communicate with PocketBase collections directly (CRUD + realtime subscriptions) for non-sensitive reads/writes, and through custom \texttt {pb\_hooks} routes for every authoritative, financially sensitive mutation.\relax }{figure.caption.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Technology Stack}{4}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Data Model and Schema Design}{4}{subsection.2.3}\protected@file@percent }
+\newlabel{sec:schema}{{2.3}{4}{Data Model and Schema Design}{subsection.2.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Technology stack summary\relax }}{5}{table.caption.2}\protected@file@percent }
+\newlabel{tab:stack}{{1}{5}{Technology stack summary\relax }{table.caption.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Migration Methodology: Firebase to PocketBase}{5}{subsection.2.4}\protected@file@percent }
+\newlabel{sec:migration}{{2.4}{5}{Migration Methodology: Firebase to PocketBase}{subsection.2.4}{}}
+\newlabel{lst:migration-users}{{1}{5}{\texttt {pb\_migrations/1700000001\_users.js} --- defines the \texttt {users} auth collection (with the bootstrap-collection guard added during deployment debugging)}{lstlisting.1}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}\texttt  {pb\_migrations/1700000001\_users.js} --- defines the \texttt  {users} auth collection (with the bootstrap-collection guard added during deployment debugging).}{5}{lstlisting.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces PocketBase collections and their roles\relax }}{6}{table.caption.3}\protected@file@percent }
+\newlabel{tab:collections}{{2}{6}{PocketBase collections and their roles\relax }{table.caption.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Firebase $\rightarrow $ PocketBase mapping (excerpt)\relax }}{7}{table.caption.4}\protected@file@percent }
+\newlabel{tab:migration}{{3}{7}{Firebase $\rightarrow $ PocketBase mapping (excerpt)\relax }{table.caption.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Backend Business Logic (\texttt  {pb\_hooks})}{8}{subsection.2.5}\protected@file@percent }
+\newlabel{sec:hooks}{{2.5}{8}{Backend Business Logic (\texttt {pb\_hooks})}{subsection.2.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.5.1}Shared Constants and the Pricing Engine}{8}{subsubsection.2.5.1}\protected@file@percent }
+\newlabel{sec:pricing}{{2.5.1}{8}{Shared Constants and the Pricing Engine}{subsubsection.2.5.1}{}}
+\newlabel{lst:pricing}{{2}{8}{\texttt {pb\_hooks/02\_pricing.pb.js} --- the sole source of billed fare, commission, and loyalty numbers (abridged)}{lstlisting.2}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2}\texttt  {pb\_hooks/02\_pricing.pb.js} --- the sole source of billed fare, commission, and loyalty numbers (abridged).}{8}{lstlisting.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Dynamic commission model: the driver's share of the base fare increases from 85\% to 93\% upon promotion to the Elite (Tier\nobreakspace  {}2) tier, which requires $\geq $100 completed rides and an average rating $\geq $4.0.\relax }}{10}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:commission}{{2}{10}{Dynamic commission model: the driver's share of the base fare increases from 85\% to 93\% upon promotion to the Elite (Tier~2) tier, which requires $\geq $100 completed rides and an average rating $\geq $4.0.\relax }{figure.caption.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.5.2}Geohash-Based Driver Matching}{10}{subsubsection.2.5.2}\protected@file@percent }
+\newlabel{sec:geohash}{{2.5.2}{10}{Geohash-Based Driver Matching}{subsubsection.2.5.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Expanding-radius geohash matching: the matcher first searches the 3\,km cell neighborhood around the pickup point; if no eligible driver is found, it doubles the radius (6\,km, then 10\,km) until a candidate is found or the maximum radius is reached.\relax }}{11}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:geohash}{{3}{11}{Expanding-radius geohash matching: the matcher first searches the 3\,km cell neighborhood around the pickup point; if no eligible driver is found, it doubles the radius (6\,km, then 10\,km) until a candidate is found or the maximum radius is reached.\relax }{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.5.3}The Ride Lifecycle State Machine}{11}{subsubsection.2.5.3}\protected@file@percent }
+\newlabel{sec:ride-lifecycle}{{2.5.3}{11}{The Ride Lifecycle State Machine}{subsubsection.2.5.3}{}}
+\newlabel{lst:accept}{{3}{11}{\texttt {pb\_hooks/12\_rides.pb.js} --- \texttt {POST /api/michwar/rides/:id/accept} (race-safe ride acceptance)}{lstlisting.3}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3}\texttt  {pb\_hooks/12\_rides.pb.js} --- \texttt  {POST /api/michwar/rides/:id/accept} (race-safe ride acceptance).}{11}{lstlisting.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Ride lifecycle state machine implemented in \texttt  {pb\_hooks/12\_rides.pb.js}. All transitions other than the initial \texttt  {create} (passenger $\rightarrow $ \texttt  {searching}) are performed inside a server-side transaction by one of the \lstinline [basicstyle=\ttfamily  \small  ]{/api/michwar/rides/:id/\{accept,status,complete\}} routes.\relax }}{12}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:statemachine}{{4}{12}{Ride lifecycle state machine implemented in \texttt {pb\_hooks/12\_rides.pb.js}. All transitions other than the initial \texttt {create} (passenger $\rightarrow $ \texttt {searching}) are performed inside a server-side transaction by one of the \code {/api/michwar/rides/:id/\{accept,status,complete\}} routes.\relax }{figure.caption.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Client Architecture: State Management and Realtime Data}{13}{subsection.2.6}\protected@file@percent }
+\newlabel{sec:client-state}{{2.6}{13}{Client Architecture: State Management and Realtime Data}{subsection.2.6}{}}
+\newlabel{lst:providers}{{4}{13}{\texttt {lib/core/providers/app\_providers.dart} --- generic realtime "watch the record related to me" provider helper (abridged)}{lstlisting.4}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4}\texttt  {lib/core/providers/app\_providers.dart} --- generic realtime "watch the record related to me" provider helper (abridged).}{13}{lstlisting.4}\protected@file@percent }
+\newlabel{lst:pbservice}{{5}{14}{\texttt {lib/core/services/pocketbase\_service.dart} --- PocketBase client singleton with persisted auth}{lstlisting.5}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5}\texttt  {lib/core/services/pocketbase\_service.dart} --- PocketBase client singleton with persisted auth.}{14}{lstlisting.5}\protected@file@percent }
+\newlabel{lst:authservice}{{6}{15}{\texttt {lib/core/services/auth\_service.dart} --- authentication state stream over the PocketBase 0.24.0 \texttt {AuthStore.onChange} stream API}{lstlisting.6}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6}\texttt  {lib/core/services/auth\_service.dart} --- authentication state stream over the PocketBase 0.24.0 \texttt  {AuthStore.onChange} stream API.}{15}{lstlisting.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7}Build Process: Producing a Release APK}{15}{subsection.2.7}\protected@file@percent }
+\newlabel{sec:build}{{2.7}{15}{Build Process: Producing a Release APK}{subsection.2.7}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7}Release APK build command, with the PocketBase backend URL baked in as a compile-time constant.}{16}{lstlisting.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.8}Deployment Methodology: Containerization and Fly.io}{16}{subsection.2.8}\protected@file@percent }
+\newlabel{sec:deployment}{{2.8}{16}{Deployment Methodology: Containerization and Fly.io}{subsection.2.8}{}}
+\newlabel{lst:dockerfile}{{8}{16}{\texttt {pocketbase/Dockerfile} --- multi-stage build producing an 18\,MB PocketBase image}{lstlisting.8}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {8}\texttt  {pocketbase/Dockerfile} --- multi-stage build producing an 18\,MB PocketBase image.}{16}{lstlisting.8}\protected@file@percent }
+\newlabel{lst:flytoml}{{9}{16}{\texttt {pocketbase/fly.toml} --- Fly.io application configuration}{lstlisting.9}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {9}\texttt  {pocketbase/fly.toml} --- Fly.io application configuration.}{16}{lstlisting.9}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Deployment pipeline: a multi-stage Docker build is sent to Fly.io's remote builder, pushed to \texttt  {registry.fly.io}, and run as a Firecracker micro-VM with a persistent volume for \texttt  {pb\_data}, exposed publicly over HTTPS.\relax }}{17}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:pipeline}{{5}{17}{Deployment pipeline: a multi-stage Docker build is sent to Fly.io's remote builder, pushed to \texttt {registry.fly.io}, and run as a Firecracker micro-VM with a persistent volume for \texttt {pb\_data}, exposed publicly over HTTPS.\relax }{figure.caption.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Results}{17}{section.3}\protected@file@percent }
+\newlabel{sec:results}{{3}{17}{Results}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Codebase Composition}{17}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Build Results}{17}{subsection.3.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Lines of code by module\relax }}{18}{table.caption.9}\protected@file@percent }
+\newlabel{tab:loc}{{4}{18}{Lines of code by module\relax }{table.caption.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Lines of code per module. The Flutter client (blue) is roughly six times larger than the PocketBase backend (orange), reflecting that the backend logic is concentrated in nine compact hook files plus declarative schema migrations.\relax }}{18}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:loc}{{6}{18}{Lines of code per module. The Flutter client (blue) is roughly six times larger than the PocketBase backend (orange), reflecting that the backend logic is concentrated in nine compact hook files plus declarative schema migrations.\relax }{figure.caption.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Deployment Outcome}{19}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Worked Example: Fare and Commission Computation}{19}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Issues Encountered and Resolutions}{19}{subsection.3.5}\protected@file@percent }
+\newlabel{sec:results-issues}{{3.5}{19}{Issues Encountered and Resolutions}{subsection.3.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Worked example: fare breakdown for an 8.4\,km / 22\,min standard-tier ride completed by a Tier-1 driver. The driver receives 429\,DZD (84.4\%), the company receives 79\,DZD in commission + surcharge (15.6\%), for a total fare of 508\,DZD.\relax }}{20}{figure.caption.11}\protected@file@percent }
+\newlabel{fig:fare}{{7}{20}{Worked example: fare breakdown for an 8.4\,km / 22\,min standard-tier ride completed by a Tier-1 driver. The driver receives 429\,DZD (84.4\%), the company receives 79\,DZD in commission + surcharge (15.6\%), for a total fare of 508\,DZD.\relax }{figure.caption.11}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Chronological timeline of build and deployment issues, from the initial \texttt  {flutter build apk} attempt to the live Fly.io deployment.\relax }}{20}{figure.caption.12}\protected@file@percent }
+\newlabel{fig:timeline}{{8}{20}{Chronological timeline of build and deployment issues, from the initial \texttt {flutter build apk} attempt to the live Fly.io deployment.\relax }{figure.caption.12}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Build and deployment issues, causes, and resolutions\relax }}{21}{table.caption.13}\protected@file@percent }
+\newlabel{tab:issues}{{5}{21}{Build and deployment issues, causes, and resolutions\relax }{table.caption.13}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Discussion}{22}{section.4}\protected@file@percent }
+\newlabel{sec:discussion}{{4}{22}{Discussion}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Architectural Trade-offs: Self-Hosting versus a Managed BaaS}{22}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Robustness of the Transactional Hook Pattern}{22}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Lessons Learned}{22}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Limitations}{23}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Future Work}{23}{subsection.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{23}{section.5}\protected@file@percent }
+\newlabel{sec:conclusion}{{5}{23}{Conclusion}{section.5}{}}
+\gdef \@abspage@last{24}
