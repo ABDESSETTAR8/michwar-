@@ -43,3 +43,4 @@ functions/.env
 # Misc
 .DS_Store
 scripts/serviceAccountKey.json 
+docs/michwar.apk 
