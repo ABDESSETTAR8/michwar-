@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MICHWAR — Admin Portal</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#0A6E57"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --teal:#0A6E57;--teal-dark:#064D3D;--teal-light:#E1F5EE;
+  --bg:#F3F5F4;--surface:#fff;--border:#E3E8E6;
+  --text:#161B19;--muted:#6B7570;
+  --danger:#C62828;--danger-bg:#FDEDED;
+  --success:#2E7D32;--success-bg:#EDF7EE;
+  --warn:#B45309;--warn-bg:#FEF3C7;
+  --info:#1565C0;--info-bg:#E3F2FD;
+  --sidebar:240px;--hdr:56px;--r:10px;--r-sm:6px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;display:flex;height:100vh;overflow:hidden}
+/* AUTH */
+#auth{position:fixed;inset:0;background:linear-gradient(135deg,var(--teal-dark),var(--teal));display:flex;align-items:center;justify-content:center;z-index:9999}
+.auth-box{background:#fff;border-radius:18px;padding:40px 36px;width:380px;box-shadow:0 30px 80px rgba(0,0,0,.3)}
+.auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+.auth-brand-icon{width:48px;height:48px;background:var(--teal);border-radius:12px;display:flex;align-items:center;justify-content:center}
+.auth-brand h1{font-size:20px;font-weight:700;color:var(--teal)}
+.auth-brand small{display:block;font-size:11px;color:var(--muted)}
+.auth-box h2{font-size:17px;font-weight:600;margin-bottom:4px}
+.auth-box p{color:var(--muted);font-size:13px;margin-bottom:24px}
+.f-group{margin-bottom:16px}
+.f-group label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.f-group input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:14px;outline:none;transition:border .15s;font-family:inherit}
+.f-group input:focus{border-color:var(--teal)}
+.auth-err{color:var(--danger);font-size:13px;margin-top:8px;display:none;padding:10px 12px;background:var(--danger-bg);border-radius:var(--r-sm)}
+.btn{padding:10px 18px;border:none;border-radius:var(--r-sm);font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s;font-family:inherit}
+.btn-primary{background:var(--teal);color:#fff;width:100%;padding:12px}
+.btn-primary:hover{opacity:.9}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed}
+.btn-sm{padding:5px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:12.5px;font-weight:500;transition:all .15s;font-family:inherit;color:var(--text)}
+.btn-sm:hover{background:var(--bg)}
+.btn-sm.approve{background:var(--success-bg);color:var(--success);border-color:var(--success)}
+.btn-sm.reject{background:var(--danger-bg);color:var(--danger);border-color:var(--danger)}
+.btn-sm.warn-btn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.btn-sm.danger{background:var(--danger-bg);color:var(--danger);border-color:var(--danger)}
+.btn-sm.info-btn{background:var(--info-bg);color:var(--info);border-color:var(--info)}
+.btn-icon{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;border-radius:4px;display:inline-flex;align-items:center;transition:color .15s}
+.btn-icon:hover{color:var(--text)}
+/* LAYOUT */
+#sidebar{width:var(--sidebar);background:var(--teal-dark);display:flex;flex-direction:column;height:100%;flex-shrink:0;overflow-y:auto}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0}
+.sb-logo-icon{width:34px;height:34px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.sb-logo span{color:#fff;font-size:16px;font-weight:700;letter-spacing:1px}
+.sb-logo small{color:rgba(255,255,255,.4);font-size:10px;display:block;font-weight:400;letter-spacing:0}
+nav{flex:1;padding:12px 8px}
+.nav-section{color:rgba(255,255,255,.35);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:10px 12px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-sm);color:rgba(255,255,255,.65);cursor:pointer;user-select:none;transition:all .15s;margin-bottom:2px;font-size:13.5px;font-weight:500}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.15);color:#fff}
+.nav-item svg{flex-shrink:0;opacity:.8}
+.nav-item.active svg{opacity:1}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;min-width:18px;text-align:center;display:none}
+.nav-badge.show{display:block}
+.sb-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.1);flex-shrink:0}
+.sb-user{color:rgba(255,255,255,.6);font-size:12px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+#sb-email{font-weight:500;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.signout-btn{background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.65);padding:7px 12px;border-radius:var(--r-sm);cursor:pointer;font-size:12.5px;width:100%;text-align:left;transition:background .15s;font-family:inherit;display:flex;align-items:center;gap:8px}
+.signout-btn:hover{background:rgba(255,255,255,.15);color:#fff}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#hdr{height:var(--hdr);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+#page-title{font-size:17px;font-weight:600}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.hdr-time{font-size:12px;color:var(--muted)}
+.refresh-btn{padding:6px 12px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;color:var(--muted);transition:all .15s;font-family:inherit}
+.refresh-btn:hover{border-color:var(--teal);color:var(--teal)}
+#content{flex:1;overflow-y:auto;padding:24px}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.b-green{background:var(--success-bg);color:var(--success)}
+.b-red{background:var(--danger-bg);color:var(--danger)}
+.b-amber{background:var(--warn-bg);color:var(--warn)}
+.b-blue{background:var(--info-bg);color:var(--info)}
+.b-gray{background:#F0F0F0;color:var(--muted)}
+.b-teal{background:var(--teal-light);color:var(--teal)}
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+.stat-card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:18px 20px}
+.stat-icon{width:40px;height:40px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.stat-icon.teal{background:var(--teal-light);color:var(--teal)}
+.stat-icon.green{background:var(--success-bg);color:var(--success)}
+.stat-icon.amber{background:var(--warn-bg);color:var(--warn)}
+.stat-icon.blue{background:var(--info-bg);color:var(--info)}
+.stat-icon.red{background:var(--danger-bg);color:var(--danger)}
+.stat-val{font-size:30px;font-weight:700;line-height:1}
+.stat-lbl{font-size:12px;color:var(--muted);font-weight:500;margin-top:4px}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:2px}
+/* CARDS */
+.card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:20px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:14px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-size:15px;font-weight:600}
+/* TABLES */
+.tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border);margin-bottom:22px}
+table{width:100%;border-collapse:collapse;background:var(--surface)}
+thead{background:#F7FAF9}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;font-size:13.5px;border-bottom:1px solid #F1F4F3;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#FAFCFB}
+.td-user{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--teal-light);color:var(--teal);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;text-transform:uppercase}
+.avatar.driver{background:#E8F4FD;color:var(--info)}
+.td-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.empty-row{text-align:center;padding:48px 20px;color:var(--muted);font-size:13px}
+.mono{font-family:monospace;font-size:12px}
+/* FILTER BAR */
+.filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-bar select,.filter-bar input{padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;outline:none;background:var(--surface);font-family:inherit}
+.filter-bar select:focus,.filter-bar input:focus{border-color:var(--teal)}
+.filter-search{flex:1;min-width:180px}
+/* MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--r);max-width:560px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-hdr{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-hdr h3{font-size:16px;font-weight:600}
+.modal-body{padding:20px 24px}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px}
+.info-item label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:2px}
+.info-item span{font-size:13.5px}
+.confirm-modal .modal-body{text-align:center;padding:32px 24px}
+.confirm-modal .modal-body h4{font-size:16px;font-weight:600;margin-bottom:8px}
+.confirm-modal .modal-body p{color:var(--muted);font-size:13px}
+/* SPINNER */
+.spinner{width:18px;height:18px;border:2.5px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-state{display:flex;align-items:center;justify-content:center;padding:48px;gap:10px;color:var(--muted)}
+/* CHART */
+.chart-box{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:20px;margin-bottom:22px}
+.chart-box canvas{max-height:220px}
+/* ACTIVITY */
+.activity-list{display:flex;flex-direction:column}
+.activity-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.activity-item:last-child{border-bottom:none}
+.activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.activity-text{flex:1;font-size:13px}
+.activity-time{font-size:11.5px;color:var(--muted);white-space:nowrap}
+/* SOS */
+.sos-card{background:var(--danger-bg);border:1.5px solid var(--danger);border-radius:var(--r);padding:16px 20px;margin-bottom:12px;display:flex;align-items:flex-start;gap:14px}
+.sos-card.resolved{background:var(--bg);border-color:var(--border);opacity:.65}
+.sos-icon{width:36px;height:36px;border-radius:50%;background:var(--danger);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sos-body{flex:1}
+.sos-body h4{font-size:14px;font-weight:600;color:var(--danger);margin-bottom:2px}
+.sos-card.resolved .sos-body h4{color:var(--muted)}
+.sos-body p{font-size:13px;color:var(--muted)}
+/* SETTINGS */
+.settings-section{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);margin-bottom:18px}
+.settings-section-hdr{padding:16px 20px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.settings-row-lbl{font-size:13.5px;font-weight:500}
+.settings-row-desc{font-size:12px;color:var(--muted);margin-top:2px}
+.settings-row-ctrl input[type="number"],.settings-row-ctrl input[type="text"]{width:110px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;outline:none;font-family:inherit;text-align:right}
+.settings-row-ctrl input:focus{border-color:var(--teal)}
+.toggle{position:relative;width:42px;height:24px;cursor:pointer;display:inline-block}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:#CBD5D1;border-radius:24px;transition:.2s}
+.toggle-slider:before{content:"";position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;left:3px;top:3px;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle input:checked+.toggle-slider{background:var(--teal)}
+.toggle input:checked+.toggle-slider:before{transform:translateX(18px)}
+.save-settings-btn{margin-top:4px;padding:10px 24px;background:var(--teal);color:#fff;border:none;border-radius:var(--r-sm);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.save-settings-btn:hover{opacity:.9}
+.save-settings-btn:disabled{opacity:.6}
+/* MISC */
+.page{display:none}
+.page.active{display:block}
+@media(max-width:680px){
+  #sidebar{position:fixed;left:-100%;z-index:100;transition:left .25s}
+  #sidebar.open{left:0}
+  #content{padding:14px}
+  .two-col{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  #menu-toggle{display:block!important}
+}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="auth-box">
+    <div class="auth-brand">
+      <div class="auth-brand-icon">
+        <svg width="28" height="28" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 17h18M5 17v-3a2 2 0 012-2h10a2 2 0 012 2v3M9 12V9a2 2 0 012-2h2a2 2 0 012 2v3"/><circle cx="8" cy="18.5" r="1.5" fill="#fff" stroke="none"/><circle cx="16" cy="18.5" r="1.5" fill="#fff" stroke="none"/></svg>
+      </div>
+      <div><h1>MICHWAR</h1><small>Admin Portal</small></div>
+    </div>
+    <h2>Administrator sign in</h2>
+    <p>Access restricted to authorised administrators only.</p>
+    <div class="f-group"><label>Email</label><input type="email" id="auth-email" placeholder="admin@michwar.dz" autocomplete="username"/></div>
+    <div class="f-group"><label>Password</label><input type="password" id="auth-pass" placeholder="••••••••" autocomplete="current-password"/></div>
+    <button class="btn btn-primary" id="auth-btn">Sign in</button>
+    <div class="auth-err" id="auth-err"></div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-icon">
+      <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 17h18M5 17v-3a2 2 0 012-2h10a2 2 0 012 2v3M9 12V9a2 2 0 012-2h2a2 2 0 012 2v3"/><circle cx="8" cy="18.5" r="1.5" fill="#fff" stroke="none"/><circle cx="16" cy="18.5" r="1.5" fill="#fff" stroke="none"/></svg>
+    </div>
+    <div><span>MICHWAR</span><small>Admin Portal</small></div>
+  </div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" data-page="dashboard"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</div>
+    <div class="nav-section">People</div>
+    <div class="nav-item" data-page="users"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.85"/></svg>Users</div>
+    <div class="nav-item" data-page="drivers"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 17h18M5 17v-3a2 2 0 012-2h10a2 2 0 012 2v3"/><circle cx="8" cy="18.5" r="1.5"/><circle cx="16" cy="18.5" r="1.5"/></svg>Drivers<span class="nav-badge" id="nb-drivers">0</span></div>
+    <div class="nav-section">Operations</div>
+    <div class="nav-item" data-page="rides"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>Rides</div>
+    <div class="nav-item" data-page="wallets"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 11h.01M2 11h20M7 7V5a2 2 0 012-2h6a2 2 0 012 2v2"/></svg>Wallets</div>
+    <div class="nav-item" data-page="sos"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>SOS Alerts<span class="nav-badge" id="nb-sos">0</span></div>
+    <div class="nav-section">Config</div>
+    <div class="nav-item" data-page="settings"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>App Settings</div>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-user"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0116 0v1"/></svg><span id="sb-email">admin</span></div>
+    <button class="signout-btn" id="signout-btn"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>
+  </div>
+</div>
+
+<div id="main">
+  <div id="hdr">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button id="menu-toggle" style="background:none;border:none;cursor:pointer;display:none;padding:4px"><svg width="20" height="20" fill="none" stroke="var(--text)" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <span id="page-title">Dashboard</span>
+    </div>
+    <div class="hdr-right">
+      <span class="hdr-time" id="clock"></span>
+      <button class="refresh-btn" id="refresh-btn"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15"/></svg>Refresh</button>
+    </div>
+  </div>
+  <div id="content">
+    <div id="page-dashboard" class="page active"></div>
+    <div id="page-users" class="page"></div>
+    <div id="page-drivers" class="page"></div>
+    <div id="page-rides" class="page"></div>
+    <div id="page-wallets" class="page"></div>
+    <div id="page-sos" class="page"></div>
+    <div id="page-settings" class="page"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-backdrop" id="modal-user"><div class="modal">
+  <div class="modal-hdr"><h3>User details</h3><button class="btn-icon" onclick="closeModal('modal-user')"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="modal-body" id="modal-user-body"></div>
+  <div class="modal-footer" id="modal-user-footer"></div>
+</div></div>
+
+<div class="modal-backdrop" id="modal-driver"><div class="modal">
+  <div class="modal-hdr"><h3>Driver details</h3><button class="btn-icon" onclick="closeModal('modal-driver')"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="modal-body" id="modal-driver-body"></div>
+  <div class="modal-footer" id="modal-driver-footer"></div>
+</div></div>
+
+<div class="modal-backdrop" id="modal-ride"><div class="modal">
+  <div class="modal-hdr"><h3>Ride details</h3><button class="btn-icon" onclick="closeModal('modal-ride')"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="modal-body" id="modal-ride-body"></div>
+  <div class="modal-footer" id="modal-ride-footer"></div>
+</div></div>
+
+<div class="modal-backdrop confirm-modal" id="modal-confirm"><div class="modal" style="max-width:400px">
+  <div class="modal-body"><h4 id="confirm-title" style="font-size:16px;font-weight:600;margin-bottom:8px;text-align:center">Are you sure?</h4><p id="confirm-msg" style="color:var(--muted);font-size:13px;text-align:center"></p></div>
+  <div class="modal-footer"><button class="btn-sm" onclick="closeModal('modal-confirm')">Cancel</button><button class="btn-sm danger" id="confirm-ok">Confirm</button></div>
+</div></div>
+
+<div class="modal-backdrop" id="modal-topup"><div class="modal" style="max-width:380px">
+  <div class="modal-hdr"><h3>Top up wallet</h3><button class="btn-icon" onclick="closeModal('modal-topup')"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="modal-body">
+    <p style="margin-bottom:14px;color:var(--muted);font-size:13px">Driver ID: <strong id="topup-driver-name"></strong></p>
+    <div class="f-group"><label>Amount (DZD)</label><input type="number" id="topup-amount" min="1" max="100000" placeholder="e.g. 500" style="width:100%"/></div>
+    <div class="f-group"><label>Note (optional)</label><input type="text" id="topup-note" placeholder="Top-up by admin" style="width:100%"/></div>
+  </div>
+  <div class="modal-footer"><button class="btn-sm" onclick="closeModal('modal-topup')">Cancel</button><button class="btn-sm approve" id="topup-ok">Add funds</button></div>
+</div></div>
+
+<script>
+// ── Firebase ──────────────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:"AIzaSyDO9HUpQvg1bA0qo8yPSj-N0uf8-SsYKsw",
+  authDomain:"michwar-bfcca.firebaseapp.com",
+  projectId:"michwar-bfcca",
+  storageBucket:"michwar-bfcca.firebasestorage.app",
+  messagingSenderId:"691204070078",
+  appId:"1:691204070078:web:c923eec5783c4045231cef"
+});
+const auth=firebase.auth();
+const db=firebase.firestore();
+
+// ── Utils ─────────────────────────────────────────────────────────
+const $=id=>document.getElementById(id);
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const initials=n=>(n||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const fmtDate=ts=>{if(!ts)return'—';let d=ts?.toDate?ts.toDate():new Date(ts);if(isNaN(d))return String(ts);return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});};
+const fmtShort=ts=>{if(!ts)return'—';let d=ts?.toDate?ts.toDate():new Date(ts);if(isNaN(d))return String(ts);return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});};
+
+function statusBadge(s){
+  const m={searching:['b-blue','Searching'],accepted:['b-teal','Accepted'],arrived:['b-teal','Arrived'],ongoing:['b-amber','On Trip'],completed:['b-green','Completed'],cancelled_by_passenger:['b-gray','Cancelled (P)'],cancelled_by_driver:['b-gray','Cancelled (D)'],no_drivers_found:['b-red','No Drivers']};
+  const[c,l]=m[s]||['b-gray',s||'—'];
+  return`<span class="badge ${c}">${l}</span>`;
+}
+function verBadge(s){
+  const m={pending:['b-gray','Pending'],under_review:['b-amber','Under Review'],approved:['b-green','Approved'],rejected:['b-red','Rejected']};
+  const[c,l]=m[s]||['b-gray',s||'Pending'];
+  return`<span class="badge ${c}">${l}</span>`;
+}
+function roleBadge(r){
+  const m={passenger:['b-teal','Passenger'],driver:['b-blue','Driver'],admin:['b-amber','Admin']};
+  const[c,l]=m[r]||['b-gray',r||'—'];
+  return`<span class="badge ${c}">${l}</span>`;
+}
+
+// ── Nav ───────────────────────────────────────────────────────────
+let activePage='dashboard';
+const PAGE_TITLES={dashboard:'Dashboard',users:'Users',drivers:'Drivers',rides:'Rides',wallets:'Wallets',sos:'SOS Alerts',settings:'App Settings'};
+
+function setPage(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  $(`page-${page}`).classList.add('active');
+  document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add('active');
+  $('page-title').textContent=PAGE_TITLES[page]||page;
+  activePage=page;
+  $('sidebar').classList.remove('open');
+  ({dashboard:renderDashboard,users:renderUsers,drivers:renderDrivers,rides:renderRides,wallets:renderWallets,sos:renderSos,settings:renderSettings})[page]?.();
+}
+
+document.querySelectorAll('.nav-item').forEach(el=>el.addEventListener('click',()=>setPage(el.dataset.page)));
+$('refresh-btn').addEventListener('click',()=>setPage(activePage));
+$('menu-toggle').addEventListener('click',()=>$('sidebar').classList.toggle('open'));
+
+// ── Clock ─────────────────────────────────────────────────────────
+setInterval(()=>$('clock').textContent=new Date().toLocaleTimeString('en-GB'),1000);
+
+// ── Modals ────────────────────────────────────────────────────────
+function openModal(id){$(id).classList.add('open');}
+function closeModal(id){$(id).classList.remove('open');}
+function confirmDialog(title,msg,onOk,danger=true){
+  $('confirm-title').textContent=title;
+  $('confirm-msg').textContent=msg;
+  $('confirm-ok').className='btn-sm '+(danger?'danger':'approve');
+  $('confirm-ok').textContent=danger?'Confirm':'Yes, proceed';
+  $('confirm-ok').onclick=()=>{closeModal('modal-confirm');onOk();};
+  openModal('modal-confirm');
+}
+document.querySelectorAll('.modal-backdrop').forEach(bd=>bd.addEventListener('click',e=>{if(e.target===bd)closeModal(bd.id);}));
+
+// ── Toast ─────────────────────────────────────────────────────────
+function toast(msg,type='success'){
+  const t=document.createElement('div');
+  const c={success:'var(--success-bg)',warn:'var(--warn-bg)',danger:'var(--danger-bg)'};
+  const tc={success:'var(--success)',warn:'var(--warn)',danger:'var(--danger)'};
+  t.style.cssText=`position:fixed;bottom:24px;right:24px;z-index:9998;background:${c[type]||c.success};color:${tc[type]||tc.success};border-radius:8px;padding:12px 18px;font-size:13.5px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.15);max-width:320px;animation:fadeInUp .2s ease`;
+  t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════════
+let ridesChart=null;
+
+async function renderDashboard(){
+  const el=$('page-dashboard');
+  el.innerHTML=`<div class="loading-state"><div class="spinner"></div> Loading…</div>`;
+  try{
+    const[uSnap,dSnap,rSnap]=await Promise.all([
+      db.collection('users').get(),
+      db.collection('drivers').get(),
+      db.collection('rides').orderBy('requestedAt','desc').limit(200).get(),
+    ]);
+    const users=uSnap.docs,drivers=dSnap.docs,rides=rSnap.docs;
+    const onlineD=drivers.filter(d=>d.data().isOnline).length;
+    const pendingD=drivers.filter(d=>['pending','under_review'].includes(d.data().verificationStatus)).length;
+    const activeR=rides.filter(r=>['searching','accepted','arrived','ongoing'].includes(r.data().status)).length;
+    const compR=rides.filter(r=>r.data().status==='completed').length;
+    const revenue=rides.filter(r=>r.data().status==='completed').reduce((s,r)=>s+(r.data().fare?.totalFare||0),0);
+
+    // Pending badge
+    if(pendingD>0){$('nb-drivers').textContent=pendingD;$('nb-drivers').classList.add('show');}
+    else $('nb-drivers').classList.remove('show');
+
+    // Rides by day
+    const dayMap={};
+    const now=new Date();
+    for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);dayMap[d.toLocaleDateString('en-GB',{weekday:'short'})]=0;}
+    rides.forEach(r=>{
+      const ts=r.data().requestedAt;if(!ts)return;
+      const d=ts?.toDate?ts.toDate():new Date(ts);if(isNaN(d))return;
+      const diff=Math.floor((now-d)/86400000);
+      if(diff<=6){const k=d.toLocaleDateString('en-GB',{weekday:'short'});if(k in dayMap)dayMap[k]++;}
+    });
+
+    // Recent rides
+    const recent=rides.slice(0,6).map(r=>{
+      const s=r.data().status;
+      const col={completed:'var(--success)',ongoing:'var(--warn)',searching:'var(--info)'}[s]||'var(--muted)';
+      return`<div class="activity-item"><div class="activity-dot" style="background:${col}"></div><div class="activity-text">Ride <span class="mono">${r.id.slice(0,8)}…</span> ${statusBadge(s)}</div><div class="activity-time">${fmtShort(r.data().requestedAt)}</div></div>`;
+    }).join('');
+
+    el.innerHTML=`
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-icon teal"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.85"/></svg></div><div class="stat-val">${users.length}</div><div class="stat-lbl">Total users</div></div>
+        <div class="stat-card"><div class="stat-icon blue"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 17h18M5 17v-3a2 2 0 012-2h10a2 2 0 012 2v3"/><circle cx="8" cy="18.5" r="1.5"/><circle cx="16" cy="18.5" r="1.5"/></svg></div><div class="stat-val">${drivers.length}</div><div class="stat-lbl">Total drivers</div><div class="stat-sub"><span style="color:var(--success)">${onlineD} online</span> · ${pendingD} pending</div></div>
+        <div class="stat-card"><div class="stat-icon amber"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg></div><div class="stat-val">${activeR}</div><div class="stat-lbl">Active rides</div><div class="stat-sub">${compR} completed total</div></div>
+        <div class="stat-card"><div class="stat-icon green"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 11h.01"/></svg></div><div class="stat-val">${Math.round(revenue).toLocaleString()}</div><div class="stat-lbl">Revenue (DZD)</div></div>
+      </div>
+      <div class="two-col">
+        <div class="chart-box"><div class="card-title">Rides — last 7 days</div><canvas id="rides-chart"></canvas></div>
+        <div class="card"><div class="card-title">Recent activity</div><div class="activity-list">${recent||'<div style="color:var(--muted);font-size:13px">No recent rides</div>'}</div></div>
+      </div>`;
+
+    if(ridesChart){ridesChart.destroy();ridesChart=null;}
+    ridesChart=new Chart(document.getElementById('rides-chart').getContext('2d'),{
+      type:'bar',
+      data:{labels:Object.keys(dayMap),datasets:[{label:'Rides',data:Object.values(dayMap),backgroundColor:'rgba(10,110,87,.2)',borderColor:'rgba(10,110,87,.8)',borderWidth:2,borderRadius:4}]},
+      options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}},responsive:true,maintainAspectRatio:true}
+    });
+  }catch(e){el.innerHTML=`<div class="loading-state" style="color:var(--danger)">Error: ${esc(e.message)}</div>`;}
+}
+
+// ══════════════════════════════════════════════════════════════════
+// USERS
+// ══════════════════════════════════════════════════════════════════
+let allUsers=[];
+
+async function renderUsers(){
+  $('page-users').innerHTML=`<div class="loading-state"><div class="spinner"></div> Loading…</div>`;
+  try{
+    const snap=await db.collection('users').orderBy('fullName').limit(500).get();
+    allUsers=snap.docs.map(d=>({id:d.id,...d.data()}));
+    drawUsersTable('','all');
+  }catch(e){$('page-users').innerHTML=`<div class="loading-state" style="color:var(--danger)">Error: ${esc(e.message)}</div>`;}
+}
+
+function drawUsersTable(search='',roleFilter='all'){
+  const filtered=allUsers.filter(u=>{
+    const mr=roleFilter==='all'||u.role===roleFilter;
+    const q=search.toLowerCase();
+    const ms=!q||(u.fullName||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q)||u.id.includes(q);
+    return mr&&ms;
+  });
+  const rows=filtered.map(u=>`<tr>
+    <td><div class="td-user"><div class="avatar">${initials(u.fullName)}</div><div><div style="font-weight:500">${esc(u.fullName||'—')}</div><div style="font-size:12px;color:var(--muted)">${esc(u.email||'')}</div></div></div></td>
+    <td>${roleBadge(u.role)}</td>
+    <td><span class="mono">${esc(u.phoneNumber||'—')}</span></td>
+    <td><span class="badge ${u.suspended?'b-red':'b-green'}">${u.suspended?'Suspended':'Active'}</span></td>
+    <td>${u.loyalty?.points??u.loyaltyPoints??0} pts</td>
+    <td>${fmtShort(u.createdAt)}</td>
+    <td><div class="td-actions">
+      <button class="btn-sm" onclick="viewUser('${u.id}')">View</button>
+      <button class="btn-sm ${u.suspended?'approve':'warn-btn'}" onclick="${u.suspended?`unsuspendUser('${u.id}')`:`suspendUser('${u.id}')`}">${u.suspended?'Unsuspend':'Suspend'}</button>
+      <button class="btn-sm danger" onclick="deleteUser('${u.id}','${esc(u.fullName||'user')}')">Delete</button>
+    </div></td>
+  </tr>`).join('');
+
+  $('page-users').innerHTML=`
+    <div class="filter-bar">
+      <input class="filter-search" id="user-q" placeholder="Search name, email, ID…" value="${esc(search)}"/>
+      <select id="user-role"><option value="all" ${roleFilter==='all'?'selected':''}>All roles</option><option value="passenger" ${roleFilter==='passenger'?'selected':''}>Passengers</option><option value="driver" ${roleFilter==='driver'?'selected':''}>Drivers</option><option value="admin" ${roleFilter==='admin'?'selected':''}>Admins</option></select>
+      <span style="color:var(--muted);font-size:13px">${filtered.length} / ${allUsers.length}</span>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>User</th><th>Role</th><th>Phone</th><th>Status</th><th>Points</th><th>Joined</th><th>Actions</th></tr></thead>
+      <tbody>${rows||`<tr><td colspan="7" class="empty-row">No users found</td></tr>`}</tbody>
+    </table></div>`;
+  $('user-q').addEventListener('input',e=>drawUsersTable(e.target.value,$('user-role').value));
+  $('user-role').addEventListener('change',e=>drawUsersTable($('user-q').value,e.target.value));
+}
+
+function viewUser(uid){
+  const u=allUsers.find(x=>x.id===uid);if(!u)return;
+  $('modal-user-body').innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+      <div class="avatar" style="width:52px;height:52px;font-size:18px">${initials(u.fullName)}</div>
+      <div><div style="font-size:17px;font-weight:600">${esc(u.fullName||'—')}</div><div style="color:var(--muted);font-size:13px">${esc(u.email||'')} · ${esc(u.phoneNumber||'')}</div></div>
+    </div>
+    <div class="info-grid">
+      <div class="info-item"><label>User ID</label><span class="mono">${u.id}</span></div>
+      <div class="info-item"><label>Role</label><span>${roleBadge(u.role)}</span></div>
+      <div class="info-item"><label>Status</label><span class="badge ${u.suspended?'b-red':'b-green'}">${u.suspended?'Suspended':'Active'}</span></div>
+      <div class="info-item"><label>Role selected</label><span>${u.roleSelected?'Yes':'No'}</span></div>
+      <div class="info-item"><label>Loyalty points</label><span>${u.loyalty?.points??u.loyaltyPoints??0}</span></div>
+      <div class="info-item"><label>Tier</label><span>${u.loyalty?.tier??u.loyaltyTier??'standard'}</span></div>
+      <div class="info-item"><label>Rides completed</label><span>${u.loyalty?.totalRidesCompleted??u.totalRidesCompleted??0}</span></div>
+      <div class="info-item"><label>Joined</label><span>${fmtDate(u.createdAt)}</span></div>
+    </div>
+    <div style="margin-top:16px">
+      <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:8px">Change role</label>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm ${u.role==='passenger'?'approve':''}" onclick="changeRole('${u.id}','passenger')">Passenger</button>
+        <button class="btn-sm ${u.role==='driver'?'approve':''}" onclick="changeRole('${u.id}','driver')">Driver</button>
+        <button class="btn-sm ${u.role==='admin'?'approve':''}" onclick="changeRole('${u.id}','admin')">Admin</button>
+      </div>
+    </div>`;
+  $('modal-user-footer').innerHTML=`
+    <button class="btn-sm" onclick="closeModal('modal-user')">Close</button>
+    <button class="btn-sm ${u.suspended?'approve':'warn-btn'}" onclick="${u.suspended?`unsuspendUser('${u.id}',true)`:`suspendUser('${u.id}',true)`}">${u.suspended?'Unsuspend':'Suspend'}</button>
+    <button class="btn-sm danger" onclick="deleteUser('${u.id}','${esc(u.fullName||'')}');closeModal('modal-user')">Delete</button>`;
+  openModal('modal-user');
+}
+
+async function changeRole(uid,role){
+  await db.collection('users').doc(uid).update({role});
+  const u=allUsers.find(x=>x.id===uid);if(u)u.role=role;
+  closeModal('modal-user');toast(`Role → ${role}`,'success');renderUsers();
+}
+function suspendUser(uid,fm=false){
+  confirmDialog('Suspend user?','The user will not be able to access the app.',async()=>{
+    await db.collection('users').doc(uid).update({suspended:true});
+    const u=allUsers.find(x=>x.id===uid);if(u)u.suspended=true;
+    if(fm)closeModal('modal-user');toast('User suspended','warn');renderUsers();
+  });
+}
+async function unsuspendUser(uid,fm=false){
+  await db.collection('users').doc(uid).update({suspended:false});
+  const u=allUsers.find(x=>x.id===uid);if(u)u.suspended=false;
+  if(fm)closeModal('modal-user');toast('User unsuspended','success');renderUsers();
+}
+function deleteUser(uid,name){
+  confirmDialog(`Delete ${name}?`,'Deletes the Firestore profile. Firebase Auth account is not removed here.',async()=>{
+    await db.collection('users').doc(uid).delete();
+    allUsers=allUsers.filter(x=>x.id!==uid);toast('User deleted','success');renderUsers();
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// DRIVERS
+// ══════════════════════════════════════════════════════════════════
+let allDrivers=[];
+
+async function renderDrivers(){
+  $('page-drivers').innerHTML=`<div class="loading-state"><div class="spinner"></div> Loading…</div>`;
+  try{
+    const[dSnap,uSnap]=await Promise.all([db.collection('drivers').get(),db.collection('users').get()]);
+    const uMap={};uSnap.docs.forEach(d=>uMap[d.id]=d.data());
+    allDrivers=dSnap.docs.map(d=>({id:d.id,...d.data(),_u:uMap[d.data().userId]||uMap[d.id]||{}}));
+    const p=allDrivers.filter(d=>['pending','under_review'].includes(d.verificationStatus||'pending')).length;
+    if(p>0){$('nb-drivers').textContent=p;$('nb-drivers').classList.add('show');}else $('nb-drivers').classList.remove('show');
+    drawDriversTable('','all');
+  }catch(e){$('page-drivers').innerHTML=`<div class="loading-state" style="color:var(--danger)">Error: ${esc(e.message)}</div>`;}
+}
+
+function drawDriversTable(search='',sf='all'){
+  const f=allDrivers.filter(d=>{
+    const ms=sf==='all'||d.verificationStatus===sf||(!d.verificationStatus&&sf==='pending');
+    const q=search.toLowerCase();
+    const ms2=!q||(d._u?.fullName||'').toLowerCase().includes(q)||d.id.includes(q)||(d.vehiclePlate||'').toLowerCase().includes(q);
+    return ms&&ms2;
+  });
+  const rows=f.map(d=>`<tr>
+    <td><div class="td-user"><div class="avatar driver">${initials(d._u?.fullName||'D')}</div><div><div style="font-weight:500">${esc(d._u?.fullName||'Unknown')}</div><div style="font-size:12px;color:var(--muted)">${esc(d._u?.email||d.userId||d.id)}</div></div></div></td>
+    <td>${verBadge(d.verificationStatus||'pending')}</td>
+    <td>${esc([d.vehicleMake,d.vehicleModel].filter(Boolean).join(' ')||'—')}<br/><span class="mono" style="font-size:11px">${esc(d.vehiclePlate||'')}</span></td>
+    <td><span class="badge ${d.isOnline?'b-green':'b-gray'}">${d.isOnline?'Online':'Offline'}</span></td>
+    <td>${(d.ratingAverage||5).toFixed(1)} ⭐</td>
+    <td>${(d.walletBalance||0).toLocaleString()} DZD</td>
+    <td>${d.ridesCompleted||0}</td>
+    <td><div class="td-actions">
+      <button class="btn-sm" onclick="viewDriver('${d.id}')">View</button>
+      ${d.verificationStatus!=='approved'?`<button class="btn-sm approve" onclick="approveDriver('${d.id}')">Approve</button>`:''}
+      ${d.verificationStatus!=='rejected'?`<button class="btn-sm reject" onclick="rejectDriver('${d.id}')">Reject</button>`:''}
+    </div></td>
+  </tr>`).join('');
+
+  $('page-drivers').innerHTML=`
+    <div class="filter-bar">
+      <input class="filter-search" id="drv-q" placeholder="Search name, plate, ID…" value="${esc(search)}"/>
+      <select id="drv-sf"><option value="all" ${sf==='all'?'selected':''}>All</option><option value="pending" ${sf==='pending'?'selected':''}>Pending</option><option value="under_review" ${sf==='under_review'?'selected':''}>Under Review</option><option value="approved" ${sf==='approved'?'selected':''}>Approved</option><option value="rejected" ${sf==='rejected'?'selected':''}>Rejected</option></select>
+      <span style="color:var(--muted);font-size:13px">${f.length} / ${allDrivers.length}</span>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Driver</th><th>Verification</th><th>Vehicle</th><th>Status</th><th>Rating</th><th>Wallet</th><th>Rides</th><th>Actions</th></tr></thead>
+      <tbody>${rows||`<tr><td colspan="8" class="empty-row">No drivers found</td></tr>`}</tbody>
+    </table></div>`;
+  $('drv-q').addEventListener('input',e=>drawDriversTable(e.target.value,$('drv-sf').value));
+  $('drv-sf').addEventListener('change',e=>drawDriversTable($('drv-q').value,e.target.value));
+}
+
+function viewDriver(id){
+  const d=allDrivers.find(x=>x.id===id);if(!d)return;
+  const u=d._u||{};
+  $('modal-driver-body').innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+      <div class="avatar driver" style="width:52px;height:52px;font-size:18px">${initials(u.fullName||'D')}</div>
+      <div><div style="font-size:17px;font-weight:600">${esc(u.fullName||'Unknown')}</div><div style="color:var(--muted);font-size:13px">${esc(u.email||'')} · ${esc(u.phoneNumber||'')}</div></div>
+    </div>
+    <div class="info-grid">
+      <div class="info-item"><label>Driver ID</label><span class="mono">${d.id}</span></div>
+      <div class="info-item"><label>Verification</label><span>${verBadge(d.verificationStatus||'pending')}</span></div>
+      <div class="info-item"><label>Vehicle</label><span>${esc([d.vehicleMake,d.vehicleModel].filter(Boolean).join(' ')||'—')}</span></div>
+      <div class="info-item"><label>Plate</label><span class="mono">${esc(d.vehiclePlate||'—')}</span></div>
+      <div class="info-item"><label>Category</label><span>${esc(d.vehicleCategory||'standard')}</span></div>
+      <div class="info-item"><label>Color</label><span>${esc(d.vehicleColor||'—')}</span></div>
+      <div class="info-item"><label>Online</label><span class="badge ${d.isOnline?'b-green':'b-gray'}">${d.isOnline?'Online':'Offline'}</span></div>
+      <div class="info-item"><label>On trip</label><span>${d.isOnTrip?'Yes':'No'}</span></div>
+      <div class="info-item"><label>Rating</label><span>${(d.ratingAverage||5).toFixed(2)} ⭐ (${d.ratingCount||0})</span></div>
+      <div class="info-item"><label>Rides</label><span>${d.ridesCompleted||0}</span></div>
+      <div class="info-item"><label>Wallet</label><span style="font-weight:600">${(d.walletBalance||0).toLocaleString()} DZD</span></div>
+      <div class="info-item"><label>Commission tier</label><span>${d.commissionTier||'tier1'} (${((d.commissionRate||.15)*100).toFixed(0)}%)</span></div>
+    </div>
+    <div style="margin-top:16px">
+      <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:8px">Commission tier</label>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm ${(!d.commissionTier||d.commissionTier==='tier1')?'approve':''}" onclick="setTier('${d.id}','tier1')">Tier 1 — 15%</button>
+        <button class="btn-sm ${d.commissionTier==='tier2'?'approve':''}" onclick="setTier('${d.id}','tier2')">Tier 2 Elite — 7%</button>
+      </div>
+    </div>`;
+  $('modal-driver-footer').innerHTML=`
+    <button class="btn-sm" onclick="closeModal('modal-driver')">Close</button>
+    ${d.verificationStatus!=='approved'?`<button class="btn-sm approve" onclick="approveDriver('${d.id}',true)">✓ Approve</button>`:''}
+    ${d.verificationStatus!=='rejected'?`<button class="btn-sm reject" onclick="rejectDriver('${d.id}',true)">✗ Reject</button>`:''}`;
+  openModal('modal-driver');
+}
+
+function approveDriver(id,fm=false){
+  confirmDialog('Approve driver?','Driver will be able to receive ride requests.',async()=>{
+    await db.collection('drivers').doc(id).update({verificationStatus:'approved'});
+    const d=allDrivers.find(x=>x.id===id);if(d)d.verificationStatus='approved';
+    if(fm)closeModal('modal-driver');toast('Driver approved ✓','success');renderDrivers();
+  },false);
+}
+function rejectDriver(id,fm=false){
+  confirmDialog('Reject driver?','Driver will not be able to accept rides.',async()=>{
+    await db.collection('drivers').doc(id).update({verificationStatus:'rejected'});
+    const d=allDrivers.find(x=>x.id===id);if(d)d.verificationStatus='rejected';
+    if(fm)closeModal('modal-driver');toast('Driver rejected','warn');renderDrivers();
+  });
+}
+async function setTier(id,tier){
+  const rate=tier==='tier2'?.07:.15,share=tier==='tier2'?.93:.85;
+  await db.collection('drivers').doc(id).update({commissionTier:tier,commissionRate:rate,driverShareRate:share});
+  const d=allDrivers.find(x=>x.id===id);if(d){d.commissionTier=tier;d.commissionRate=rate;}
+  toast(`Commission → ${tier}`,'success');closeModal('modal-driver');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RIDES
+// ══════════════════════════════════════════════════════════════════
+let allRides=[];
+const ACTIVE_S=['searching','accepted','arrived','ongoing'];
+
+async function renderRides(){
+  $('page-rides').innerHTML=`<div class="loading-state"><div class="spinner"></div> Loading…</div>`;
+  try{
+    const snap=await db.collection('rides').orderBy('requestedAt','desc').limit(300).get();
+    allRides=snap.docs.map(d=>({id:d.id,...d.data()}));
+    drawRidesTable('','all');
+  }catch(e){$('page-rides').innerHTML=`<div class="loading-state" style="color:var(--danger)">Error: ${esc(e.message)}</div>`;}
+}
+
+function drawRidesTable(search='',sf='all'){
+  const f=allRides.filter(r=>{
+    const ms=sf==='all'||(sf==='active'&&ACTIVE_S.includes(r.status))||r.status===sf;
+    const q=search.toLowerCase();
+    const ms2=!q||r.id.includes(q)||(r.passengerId||'').includes(q)||(r.driverId||'').includes(q);
+    return ms&&ms2;
+  });
+  const rows=f.map(r=>`<tr>
+    <td><span class="mono">${r.id.slice(0,10)}…</span></td>
+    <td>${statusBadge(r.status)}</td>
+    <td><span class="mono" style="font-size:11px">${(r.passengerId||'').slice(0,10)}…</span></td>
+    <td><span class="mono" style="font-size:11px">${r.driverId?(r.driverId.slice(0,10)+'…'):'—'}</span></td>
+    <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${esc(r.pickup?.address||'—')}</td>
+    <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${esc(r.dropoff?.address||'—')}</td>
+    <td>${r.fare?.totalFare?`${r.fare.totalFare.toLocaleString()} DZD`:r.estimate?.fareEstimate?`~${r.estimate.fareEstimate.toLocaleString()} DZD`:'—'}</td>
+    <td>${fmtShort(r.requestedAt)}</td>
+    <td><div class="td-actions">
+      <button class="btn-sm" onclick="viewRide('${r.id}')">View</button>
+      ${ACTIVE_S.includes(r.status)?`<button class="btn-sm danger" onclick="cancelRide('${r.id}')">Cancel</button>`:''}
+    </div></td>
+  </tr>`).join('');
+
+  $('page-rides').innerHTML=`
+    <div class="filter-bar">
+      <input class="filter-search" id="ride-q" placeholder="Search ride ID, passenger, driver…" value="${esc(search)}"/>
+      <select id="ride-sf">
+        <option value="all" ${sf==='all'?'selected':''}>All</option>
+        <option value="active" ${sf==='active'?'selected':''}>Active</option>
+        <option value="searching" ${sf==='searching'?'selected':''}>Searching</option>
+        <option value="accepted" ${sf==='accepted'?'selected':''}>Accepted</option>
+        <option value="ongoing" ${sf==='ongoing'?'selected':''}>Ongoing</option>
+        <option value="completed" ${sf==='completed'?'selected':''}>Completed</option>
+        <option value="cancelled_by_passenger" ${sf==='cancelled_by_passenger'?'selected':''}>Cancelled (P)</option>
+        <option value="cancelled_by_driver" ${sf==='cancelled_by_driver'?'selected':''}>Cancelled (D)</option>
+      </select>
+      <span style="color:var(--muted);font-size:13px">${f.length} / ${allRides.length}</span>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Ride ID</th><th>Status</th><th>Passenger</th><th>Driver</th><th>Pickup</th><th>Dropoff</th><th>Fare</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>${rows||`<tr><td colspan="9" class="empty-row">No rides found</td></tr>`}</tbody>
+    </table></div>`;
+  $('ride-q').addEventListener('input',e=>drawRidesTable(e.target.value,$('ride-sf').value));
+  $('ride-sf').addEventListener('change',e=>drawRidesTable($('ride-q').value,e.target.value));
+}
+
+function viewRide(id){
+  const r=allRides.find(x=>x.id===id);if(!r)return;
+  $('modal-ride-body').innerHTML=`
+    <div style="margin-bottom:16px">${statusBadge(r.status)}</div>
+    <div class="info-grid">
+      <div class="info-item"><label>Ride ID</label><span class="mono" style="font-size:11px">${r.id}</span></div>
+      <div class="info-item"><label>Tier</label><span>${esc(r.rideTier||'standard')}</span></div>
+      <div class="info-item"><label>Passenger</label><span class="mono" style="font-size:11px">${esc(r.passengerId||'—')}</span></div>
+      <div class="info-item"><label>Driver</label><span class="mono" style="font-size:11px">${esc(r.driverId||'—')}</span></div>
+      <div class="info-item"><label>Pickup</label><span style="font-size:12px">${esc(r.pickup?.address||'—')}</span></div>
+      <div class="info-item"><label>Dropoff</label><span style="font-size:12px">${esc(r.dropoff?.address||'—')}</span></div>
+      <div class="info-item"><label>Distance est.</label><span>${r.estimate?.distanceKm?.toFixed(1)||'—'} km</span></div>
+      <div class="info-item"><label>Duration est.</label><span>${r.estimate?.durationMin?.toFixed(0)||'—'} min</span></div>
+      <div class="info-item"><label>Fare est.</label><span>${r.estimate?.fareEstimate?.toLocaleString()||'—'} DZD</span></div>
+      <div class="info-item"><label>Final fare</label><span style="font-weight:600">${r.fare?.totalFare?.toLocaleString()||'—'} DZD</span></div>
+      <div class="info-item"><label>Commission</label><span>${r.fare?.commissionAmount?.toLocaleString()||'—'} DZD</span></div>
+      <div class="info-item"><label>Driver payout</label><span>${r.fare?.driverPayout?.toLocaleString()||'—'} DZD</span></div>
+      <div class="info-item"><label>Points awarded</label><span>${r.pointsAwarded||0}</span></div>
+      <div class="info-item"><label>Rating</label><span>${r.rating?.stars?`${r.rating.stars}⭐ ${esc(r.rating.comment||'')}`:'—'}</span></div>
+      <div class="info-item"><label>Requested at</label><span>${fmtDate(r.requestedAt)}</span></div>
+      <div class="info-item"><label>Completed at</label><span>${fmtDate(r.completedAt)}</span></div>
+    </div>`;
+  $('modal-ride-footer').innerHTML=`
+    <button class="btn-sm" onclick="closeModal('modal-ride')">Close</button>
+    ${ACTIVE_S.includes(r.status)?`<button class="btn-sm danger" onclick="cancelRide('${r.id}');closeModal('modal-ride')">Cancel ride</button>`:''}`;
+  openModal('modal-ride');
+}
+
+function cancelRide(id){
+  confirmDialog('Cancel this ride?','Passenger and driver will be notified.',async()=>{
+    await db.collection('rides').doc(id).update({status:'cancelled_by_passenger',cancelledAt:new Date().toISOString(),cancelledBy:'admin'});
+    const r=allRides.find(x=>x.id===id);if(r)r.status='cancelled_by_passenger';
+    toast('Ride cancelled','warn');renderRides();
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// WALLETS
+// ══════════════════════════════════════════════════════════════════
+let topupId='';
+
+async function renderWallets(){
+  $('page-wallets').innerHTML=`<div class="loading-state"><div class="spinner"></div> Loading…</div>`;
+  try{
+    const[wSnap,txSnap]=await Promise.all([
+      db.collection('wallets').get(),
+      db.collection('wallet_transactions').orderBy('createdAt','desc').limit(100).get().catch(()=>({docs:[]})),
+    ]);
+    const wallets=wSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const txs=txSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const total=wallets.reduce((s,w)=>s+(w.balance||0),0);
+    const low=wallets.filter(w=>w.lowBalance||w.balance<=200).length;
+
+    const wRows=wallets.map(w=>`<tr>
+      <td><span class="mono">${w.id.slice(0,16)}…</span></td>
+      <td style="font-weight:600">${(w.balance||0).toLocaleString()} DZD</td>
+      <td><span class="badge ${(w.lowBalance||w.balance<=200)?'b-red':'b-green'}">${(w.lowBalance||w.balance<=200)?'Low':'OK'}</span></td>
+      <td>${fmtShort(w.lastTopUpAt)}</td>
+      <td><button class="btn-sm approve" onclick="openTopup('${w.id}')">Top up</button></td>
+    </tr>`).join('');
+
+    const txRows=txs.map(t=>`<tr>
+      <td class="mono">${t.id.slice(0,12)}…</td>
+      <td>${esc(t.type||'—')}</td>
+      <td style="font-weight:600;color:${(t.amount||0)>=0?'var(--success)':'var(--danger)'}">${(t.amount||0)>=0?'+':''}${(t.amount||0).toLocaleString()} DZD</td>
+      <td class="mono">${esc((t.driverId||'').slice(0,14))}…</td>
+      <td>${fmtShort(t.createdAt)}</td>
+    </tr>`).join('');
+
+    $('page-wallets').innerHTML=`
+      <div class="stat-grid" style="margin-bottom:22px">
+        <div class="stat-card"><div class="stat-icon teal"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 11h.01"/></svg></div><div class="stat-val">${Math.round(total).toLocaleString()}</div><div class="stat-lbl">Total balance (DZD)</div><div class="stat-sub">${wallets.length} wallets</div></div>
+        <div class="stat-card"><div class="stat-icon red"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg></div><div class="stat-val">${low}</div><div class="stat-lbl">Low balance</div><div class="stat-sub">≤ 200 DZD</div></div>
+      </div>
+      <div class="section-title" style="margin-bottom:12px">Driver wallets</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Driver ID</th><th>Balance</th><th>Status</th><th>Last top-up</th><th>Actions</th></tr></thead>
+        <tbody>${wRows||`<tr><td colspan="5" class="empty-row">No wallets found</td></tr>`}</tbody>
+      </table></div>
+      <div class="section-title" style="margin-bottom:12px">Recent transactions</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>TX ID</th><th>Type</th><th>Amount</th><th>Driver</th><th>Date</th></tr></thead>
+        <tbody>${txRows||`<tr><td colspan="5" class="empty-row">No transactions yet</td></tr>`}</tbody>
+      </table></div>`;
+  }catch(e){$('page-wallets').innerHTML=`<div class="loading-state" style="color:var(--danger)">Error: ${esc(e.message)}</div>`;}
+}
+
+function openTopup(id){topupId=id;$('topup-driver-name').textContent=id;$('topup-amount').value='';$('topup-note').value='Top-up by admin';openModal('modal-topup');}
+
+$('topup-ok').addEventListener('click',async()=>{
+  const amt=parseFloat($('topup-amount').value);
+  if(!amt||amt<=0){toast('Enter a valid amount','warn');return;}
+  $('topup-ok').disabled=true;
+  try{
+    await db.collection('wallets').doc(topupId).update({balance:firebase.firestore.FieldValue.increment(amt),lowBalance:false,lastTopUpAt:new Date().toISOString()});
+    await db.collection('wallet_transactions').add({driverId:topupId,type:'admin_topup',amount:amt,note:$('topup-note').value||'Top-up by admin',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    closeModal('modal-topup');toast(`Added ${amt.toLocaleString()} DZD`,'success');renderWallets();
+  }catch(e){toast('Error: '+e.message,'danger');}
+  finally{$('topup-ok').disabled=false;}
+});
+
+// ══════════════════════════════════════════════════════════════════
+// SOS
+// ══════════════════════════════════════════════════════════════════
+let sosUnsub=null;
+
+async function renderSos(){
+  if(sosUnsub){sosUnsub();sosUnsub=null;}
+  $('page-sos').innerHTML=`<div class="loading-state"><div class="spinner"></div> Subscribing…</div>`;
+  sosUnsub=db.collection('sos_alerts').orderBy('createdAt','desc').limit(50).onSnapshot(snap=>{
+    const alerts=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const open=alerts.filter(a=>!a.resolved).length;
+    if(open>0){$('nb-sos').textContent=open;$('nb-sos').classList.add('show');}else $('nb-sos').classList.remove('show');
+    const cards=alerts.map(a=>`
+      <div class="sos-card ${a.resolved?'resolved':''}">
+        <div class="sos-icon"><svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg></div>
+        <div class="sos-body">
+          <h4>${a.resolved?'Resolved':'🔴 ACTIVE SOS'}</h4>
+          <p>User: <strong>${esc(a.userId||a.passengerId||'Unknown')}</strong>${a.rideId?` · Ride: <span class="mono">${a.rideId.slice(0,10)}…</span>`:''}${a.location?` · <a href="https://maps.google.com/?q=${a.location.lat},${a.location.lng}" target="_blank" style="color:var(--info)">View on map</a>`:''}</p>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:11.5px;color:var(--muted)">${fmtDate(a.createdAt)}</div>
+          ${!a.resolved?`<button class="btn-sm approve" style="margin-top:8px" onclick="resolveSos('${a.id}')">Mark resolved</button>`:'<span class="badge b-gray" style="margin-top:8px;display:inline-flex">Resolved</span>'}
+        </div>
+      </div>`).join('');
+    $('page-sos').innerHTML=`
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <span class="section-title">SOS Alerts</span>
+        ${open>0?`<span class="badge b-red">${open} open</span>`:'<span class="badge b-green">All clear</span>'}
+        <span style="color:var(--muted);font-size:12px;margin-left:auto">Live — real-time</span>
+      </div>
+      ${cards||'<div class="empty-row">No SOS alerts recorded</div>'}`;
+  },e=>{$('page-sos').innerHTML=`<div class="loading-state" style="color:var(--danger)">Error: ${esc(e.message)}</div>`;});
+}
+
+async function resolveSos(id){
+  await db.collection('sos_alerts').doc(id).update({resolved:true,resolvedAt:new Date().toISOString(),resolvedBy:'admin'});
+  toast('SOS resolved','success');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════════════════════════
+const DEF={baseFareDzd:50,perKmDzd:15,perMinDzd:2,surgeMultiplierMax:3,walletLowThreshold:200,walletWelcomeCredit:500,pointsPerHundredDzd:2,geohashPrecision:6,maxSearchRadiusKm:10,tier2MinRides:100,tier2MinRating:4.0,maintenanceMode:false,newRegistrationsEnabled:true};
+
+async function renderSettings(){
+  $('page-settings').innerHTML=`<div class="loading-state"><div class="spinner"></div> Loading…</div>`;
+  try{
+    const doc=await db.collection('config').doc('app').get();
+    const c={...DEF,...(doc.exists?doc.data():{})};
+    $('page-settings').innerHTML=`<div style="max-width:720px">
+      <div class="settings-section">
+        <div class="settings-section-hdr">💰 Fare</div>
+        ${sNum('baseFareDzd','Base fare (DZD)','Starting fare for every ride.',c.baseFareDzd)}
+        ${sNum('perKmDzd','Per km rate (DZD)','Charged per kilometre.',c.perKmDzd)}
+        ${sNum('perMinDzd','Per minute rate (DZD)','Charged per minute of duration.',c.perMinDzd)}
+        ${sNum('surgeMultiplierMax','Max surge multiplier','e.g. 3 = up to 3× base fare.',c.surgeMultiplierMax)}
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-hdr">🚗 Driver Wallet</div>
+        ${sNum('walletLowThreshold','Low balance threshold (DZD)','Drivers below this cannot accept rides.',c.walletLowThreshold)}
+        ${sNum('walletWelcomeCredit','Welcome credit (DZD)','Starting balance for new verified drivers.',c.walletWelcomeCredit)}
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-hdr">⭐ Loyalty & Commission</div>
+        ${sNum('pointsPerHundredDzd','Points per 100 DZD','MICHWAR points per 100 DZD fare.',c.pointsPerHundredDzd)}
+        ${sNum('tier2MinRides','Elite min rides','Min completed rides for Tier 2.',c.tier2MinRides)}
+        ${sNum('tier2MinRating','Elite min rating','Min avg rating for Tier 2.',c.tier2MinRating)}
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-hdr">📡 Matching</div>
+        ${sNum('geohashPrecision','Geohash precision (4–8)','Prefix length for driver proximity.',c.geohashPrecision)}
+        ${sNum('maxSearchRadiusKm','Max search radius (km)','Max radius to search for drivers.',c.maxSearchRadiusKm)}
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-hdr">🔒 App Control</div>
+        ${sToggle('maintenanceMode','Maintenance mode','Show maintenance banner to all users.',c.maintenanceMode)}
+        ${sToggle('newRegistrationsEnabled','New registrations','Allow new user sign-ups.',c.newRegistrationsEnabled)}
+      </div>
+      <button class="save-settings-btn" id="save-cfg">Save settings</button>
+      <span id="save-msg" style="margin-left:14px;font-size:13px;color:var(--muted)"></span>
+    </div>`;
+    $('save-cfg').addEventListener('click',saveSettings);
+  }catch(e){$('page-settings').innerHTML=`<div class="loading-state" style="color:var(--danger)">Error: ${esc(e.message)}</div>`;}
+}
+
+const sNum=(k,l,d,v)=>`<div class="settings-row"><div><div class="settings-row-lbl">${l}</div><div class="settings-row-desc">${d}</div></div><div class="settings-row-ctrl"><input type="number" id="cfg-${k}" value="${v}" step="any"/></div></div>`;
+const sToggle=(k,l,d,v)=>`<div class="settings-row"><div><div class="settings-row-lbl">${l}</div><div class="settings-row-desc">${d}</div></div><div class="settings-row-ctrl"><label class="toggle"><input type="checkbox" id="cfg-${k}" ${v?'checked':''}/><span class="toggle-slider"></span></label></div></div>`;
+
+async function saveSettings(){
+  const btn=$('save-cfg'),msg=$('save-msg');
+  btn.disabled=true;btn.textContent='Saving…';
+  const data={};
+  Object.keys(DEF).forEach(k=>{
+    const el=$(`cfg-${k}`);if(!el)return;
+    data[k]=el.type==='checkbox'?el.checked:parseFloat(el.value)||0;
+  });
+  try{
+    await db.collection('config').doc('app').set(data,{merge:true});
+    msg.textContent='✓ Saved';msg.style.color='var(--success)';
+    toast('Settings saved','success');
+    setTimeout(()=>msg.textContent='',3000);
+  }catch(e){msg.textContent='Error: '+e.message;msg.style.color='var(--danger)';}
+  finally{btn.disabled=false;btn.textContent='Save settings';}
+}
+
+// ══════════════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════════════
+$('auth-btn').addEventListener('click',async()=>{
+  const email=$('auth-email').value.trim(),pass=$('auth-pass').value;
+  const err=$('auth-err'),btn=$('auth-btn');
+  btn.textContent='Signing in…';btn.disabled=true;err.style.display='none';
+  try{
+    const cred=await auth.signInWithEmailAndPassword(email,pass);
+    const doc=await db.collection('users').doc(cred.user.uid).get();
+    if(!doc.exists||doc.data().role!=='admin'){
+      await auth.signOut();
+      err.textContent='Access denied — not an admin account.';err.style.display='block';return;
+    }
+    $('sb-email').textContent=email;
+    $('auth').style.display='none';
+    setPage('dashboard');
+  }catch(e){
+    err.textContent=['auth/invalid-credential','auth/user-not-found','auth/wrong-password'].includes(e.code)?'Invalid email or password.':(e.message||'Sign-in failed.');
+    err.style.display='block';
+  }finally{btn.textContent='Sign in';btn.disabled=false;}
+});
+$('auth-email').addEventListener('keydown',e=>{if(e.key==='Enter')$('auth-pass').focus();});
+$('auth-pass').addEventListener('keydown',e=>{if(e.key==='Enter')$('auth-btn').click();});
+
+$('signout-btn').addEventListener('click',async()=>{
+  if(sosUnsub){sosUnsub();sosUnsub=null;}
+  await auth.signOut();
+  $('auth').style.display='flex';
+});
+
+auth.onAuthStateChanged(async user=>{
+  if(!user){$('auth').style.display='flex';return;}
+  try{
+    const doc=await db.collection('users').doc(user.uid).get();
+    if(!doc.exists||doc.data().role!=='admin'){await auth.signOut();return;}
+    $('sb-email').textContent=user.email||'admin';
+    $('auth').style.display='none';
+    setPage('dashboard');
+  }catch{$('auth').style.display='flex';}
+});
+
+if(window.innerWidth<=680)$('menu-toggle').style.display='block';
+window.addEventListener('resize',()=>$('menu-toggle').style.display=window.innerWidth<=680?'block':'none');
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

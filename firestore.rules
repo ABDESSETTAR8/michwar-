@@ -59,13 +59,13 @@ service cloud.firestore {
       // places/SOS contacts/FCM tokens. `loyalty` (points/tier) and `role`
       // are NEVER client-writable — only Cloud Functions (completeRide,
       // admin tools) may change them.
-      allow update: if isOwner(uid) &&
-        onlyAffectsKeys([
+      allow update: if isAdmin() ||
+        (isOwner(uid) && onlyAffectsKeys([
           'fullName', 'email', 'photoUrl', 'savedPlaces', 'sosContacts',
           'fcmTokens', 'preferences', 'updatedAt'
-        ]);
+        ]));
 
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
     // -------------------------------------------------------------------
@@ -78,7 +78,7 @@ service cloud.firestore {
       // a placeholder/demo figure, not real money.
       allow read: if isSignedIn();
 
-      allow create: if isOwner(uid) && request.resource.data.uid == uid;
+      allow create: if isAdmin() || (isOwner(uid) && request.resource.data.uid == uid);
 
       // Self-service fields only: presence/availability toggle, live
       // location ping, Heading-Home preference, and verification document
@@ -86,13 +86,13 @@ service cloud.firestore {
       // (walletBalance, commissionTier, commissionRate, driverShareRate,
       // ridesCompleted, ratingAverage, ratingCount, isOnTrip) are
       // Cloud-Functions-only.
-      allow update: if isOwner(uid) &&
-        onlyAffectsKeys([
+      allow update: if isAdmin() ||
+        (isOwner(uid) && onlyAffectsKeys([
           'isOnline', 'location', 'headingHome', 'vehicle',
           'verification', 'fcmTokens', 'updatedAt'
-        ]);
+        ]));
 
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
     // -------------------------------------------------------------------
@@ -111,11 +111,8 @@ service cloud.firestore {
         request.resource.data.status == 'searching' &&
         request.resource.data.driverId == null;
 
-      // Every subsequent state transition (accepted, arrived, ongoing,
-      // cancelled, completed, fare, rating, candidateDriverIds, live-share
-      // tokens) is written exclusively by Cloud Functions via the Admin SDK.
-      allow update: if false;
-      allow delete: if false;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
 
       // Server-maintained audit trail of status transitions.
       match /status_history/{entryId} {
@@ -132,11 +129,11 @@ service cloud.firestore {
     // -------------------------------------------------------------------
     match /wallets/{driverId} {
       allow read: if isOwner(driverId) || isAdmin();
-      allow write: if false; // topUpWallet / completeRide (Cloud Functions)
+      allow write: if isAdmin(); // topUpWallet / completeRide (Cloud Functions or admin)
 
       match /transactions/{txId} {
         allow read: if isOwner(driverId) || isAdmin();
-        allow write: if false;
+        allow write: if isAdmin();
       }
     }
 
@@ -146,7 +143,7 @@ service cloud.firestore {
     // -------------------------------------------------------------------
     match /transactions/{txId} {
       allow read: if isAdmin();
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
     // -------------------------------------------------------------------
@@ -155,7 +152,15 @@ service cloud.firestore {
     match /sos_alerts/{alertId} {
       allow read: if isAdmin() ||
         (isSignedIn() && resource.data.userId == request.auth.uid);
-      allow write: if false;
+      allow write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------
+    // config/{docId} — app-wide settings, admin-writable.
+    // -------------------------------------------------------------------
+    match /config/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     // -------------------------------------------------------------------

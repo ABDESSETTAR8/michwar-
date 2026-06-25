@@ -1,0 +1,14 @@
+{
+  "name": "MICHWAR Admin Portal",
+  "short_name": "MICHWAR Admin",
+  "description": "Admin dashboard for the MICHWAR ride-hailing platform",
+  "start_url": "/michwar-/admin/",
+  "display": "standalone",
+  "background_color": "#064D3D",
+  "theme_color": "#0A6E57",
+  "orientation": "any",
+  "icons": [
+    { "src": "../icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "../icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
