@@ -17,30 +17,27 @@ rules_version = '2';
 //     with a contact who doesn't have the app — but only while unexpired.
 // =============================================================================
 
-function isSignedIn() {
-  return request.auth != null;
-}
-
-function isOwner(uid) {
-  return isSignedIn() && request.auth.uid == uid;
-}
-
-function isAdmin() {
-  return isSignedIn() &&
-    exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-}
-
-// Only the listed top-level keys may be present in the diff between the
-// existing document and the proposed write. Used to whitelist the narrow
-// set of self-service fields a user/driver may edit directly.
-function onlyAffectsKeys(allowedKeys) {
-  return request.resource.data.diff(resource.data).affectedKeys()
-    .hasOnly(allowedKeys);
-}
-
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function onlyAffectsKeys(allowedKeys) {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(allowedKeys);
+    }
 
     // -------------------------------------------------------------------
     // users/{uid}
